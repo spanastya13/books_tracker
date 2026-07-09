@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BookFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">BookFlow</p>
+          <h1>Трекер чтения, который держит твои книги в порядке</h1>
+          <p class="hero-text">
+            Добавляй книги, отмечай статус, следи за прогрессом и сохраняй
+            личную библиотеку прямо в браузере.
+          </p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-card">
+            <span>Всего книг</span>
+            <strong id="totalBooks">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Прочитано</span>
+            <strong id="completedBooks">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Страниц в процессе</span>
+            <strong id="pagesInProgress">0</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel form-panel">
+          <div class="panel-heading">
+            <h2>Добавить книгу</h2>
+            <p>Новая запись появится в списке ниже.</p>
+          </div>
+
+          <form id="bookForm" class="book-form">
+            <label>
+              Название
+              <input type="text" id="title" name="title" required />
+            </label>
+
+            <label>
+              Автор
+              <input type="text" id="author" name="author" required />
+            </label>
+
+            <div class="two-columns">
+              <label>
+                Всего страниц
+                <input type="number" id="pages" name="pages" min="1" required />
+              </label>
+
+              <label>
+                Прочитано страниц
+                <input
+                  type="number"
+                  id="currentPage"
+                  name="currentPage"
+                  min="0"
+                  value="0"
+                  required
+                />
+              </label>
+            </div>
+
+            <label>
+              Статус
+              <select id="status" name="status">
+                <option value="planned">Хочу прочитать</option>
+                <option value="reading">Читаю</option>
+                <option value="finished">Прочитано</option>
+              </select>
+            </label>
+
+            <label>
+              Заметка
+              <textarea
+                id="notes"
+                name="notes"
+                rows="4"
+                placeholder="Что хочешь запомнить об этой книге?"
+              ></textarea>
+            </label>
+
+            <button type="submit" class="primary-button">Сохранить книгу</button>
+          </form>
+        </section>
+
+        <section class="panel shelf-panel">
+          <div class="shelf-toolbar">
+            <div class="panel-heading">
+              <h2>Моя полка</h2>
+              <p>Фильтруй список и обновляй прогресс по мере чтения.</p>
+            </div>
+
+            <div class="toolbar-controls">
+              <label class="search-control">
+                <span class="visually-hidden">Поиск по книгам</span>
+                <input
+                  type="search"
+                  id="searchInput"
+                  placeholder="Поиск по названию или автору"
+                />
+              </label>
+
+              <label>
+                <span class="visually-hidden">Фильтр по статусу</span>
+                <select id="statusFilter">
+                  <option value="all">Все статусы</option>
+                  <option value="planned">Хочу прочитать</option>
+                  <option value="reading">Читаю</option>
+                  <option value="finished">Прочитано</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div id="booksList" class="books-list"></div>
+          <div id="emptyState" class="empty-state">
+            Пока пусто. Добавь первую книгу и начни собирать свою полку.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="bookCardTemplate">
+      <article class="book-card">
+        <div class="book-card-top">
+          <div>
+            <span class="status-badge"></span>
+            <h3 class="book-title"></h3>
+            <p class="book-author"></p>
+          </div>
+          <button type="button" class="delete-button" aria-label="Удалить книгу">
+            Удалить
+          </button>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-meta">
+            <span class="progress-label"></span>
+            <span class="progress-percent"></span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="card-controls">
+          <label>
+            Статус
+            <select class="card-status">
+              <option value="planned">Хочу прочитать</option>
+              <option value="reading">Читаю</option>
+              <option value="finished">Прочитано</option>
+            </select>
+          </label>
+
+          <label>
+            Текущая страница
+            <input type="number" class="card-page" min="0" />
+          </label>
+        </div>
+
+        <p class="book-notes"></p>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
