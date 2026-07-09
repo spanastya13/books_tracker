@@ -1,8 +1,7 @@
 :root {
   color-scheme: light;
   --bg: #f6efe5;
-  --bg-accent: #ead8bf;
-  --panel: rgba(255, 250, 244, 0.82);
+  --panel: rgba(255, 250, 244, 0.84);
   --panel-strong: #fff9f1;
   --text: #201715;
   --muted: #6d5a54;
@@ -10,6 +9,7 @@
   --brand: #b14f2f;
   --brand-deep: #81361d;
   --gold: #e7b65c;
+  --accent: #f2dcc3;
   --shadow: 0 24px 60px rgba(87, 49, 24, 0.12);
   font-family: "Manrope", sans-serif;
 }
@@ -24,7 +24,7 @@ body {
   background:
     radial-gradient(circle at top left, rgba(231, 182, 92, 0.35), transparent 28%),
     radial-gradient(circle at bottom right, rgba(177, 79, 47, 0.16), transparent 24%),
-    linear-gradient(135deg, var(--bg) 0%, #f4e6d4 100%);
+    linear-gradient(135deg, #f8f0e8 0%, #f0dfcc 100%);
   color: var(--text);
 }
 
@@ -36,7 +36,7 @@ textarea {
 }
 
 .page-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
   padding: 32px 0 48px;
 }
@@ -74,9 +74,9 @@ textarea {
 
 h1 {
   margin: 0;
-  font-size: clamp(36px, 5vw, 58px);
-  line-height: 1;
-  max-width: 11ch;
+  font-size: clamp(34px, 4.8vw, 56px);
+  line-height: 1.02;
+  max-width: 12ch;
 }
 
 .hero-text {
@@ -114,7 +114,7 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 390px 1fr;
   gap: 24px;
 }
 
@@ -172,7 +172,8 @@ textarea {
 }
 
 .primary-button,
-.delete-button {
+.delete-button,
+.share-button {
   border: none;
   border-radius: 16px;
   cursor: pointer;
@@ -186,15 +187,25 @@ textarea {
   font-weight: 700;
 }
 
-.delete-button {
+.delete-button,
+.share-button {
   padding: 10px 14px;
-  background: rgba(177, 79, 47, 0.1);
-  color: var(--brand-deep);
   height: fit-content;
 }
 
+.delete-button {
+  background: rgba(177, 79, 47, 0.1);
+  color: var(--brand-deep);
+}
+
+.share-button {
+  background: var(--accent);
+  color: var(--text);
+}
+
 .primary-button:hover,
-.delete-button:hover {
+.delete-button:hover,
+.share-button:hover {
   transform: translateY(-1px);
 }
 
@@ -208,7 +219,7 @@ textarea {
 
 .toolbar-controls {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) 180px;
+  grid-template-columns: minmax(240px, 320px) 190px;
   gap: 12px;
 }
 
@@ -231,7 +242,15 @@ textarea {
   align-items: start;
 }
 
-.status-badge {
+.badge-row,
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge,
+.format-badge {
   display: inline-flex;
   padding: 8px 12px;
   border-radius: 999px;
@@ -239,8 +258,16 @@ textarea {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.status-badge {
   background: rgba(231, 182, 92, 0.22);
   color: var(--brand-deep);
+}
+
+.format-badge {
+  background: rgba(109, 90, 84, 0.12);
+  color: var(--text);
 }
 
 .book-title {
@@ -314,7 +341,7 @@ textarea {
   border: 0;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 980px) {
   .hero,
   .layout {
     grid-template-columns: 1fr;
@@ -331,7 +358,7 @@ textarea {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .page-shell {
     width: min(100% - 20px, 1180px);
     padding-top: 20px;

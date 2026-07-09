@@ -17,24 +17,24 @@
       <header class="hero">
         <div class="hero-copy">
           <p class="eyebrow">BookFlow</p>
-          <h1>Трекер чтения, который держит твои книги в порядке</h1>
+          <h1>Трекер книг, чтения и аудиокниг в одном месте</h1>
           <p class="hero-text">
-            Добавляй книги, отмечай статус, следи за прогрессом и сохраняй
-            личную библиотеку прямо в браузере.
+            Собирай свою полку с нуля, выбирай книги из популярного каталога,
+            отмечай прочитанное или прослушанное и делись прогрессом.
           </p>
         </div>
         <div class="hero-stats">
           <div class="stat-card">
-            <span>Всего книг</span>
+            <span>Всего в трекере</span>
             <strong id="totalBooks">0</strong>
           </div>
           <div class="stat-card">
-            <span>Прочитано</span>
+            <span>Завершено</span>
             <strong id="completedBooks">0</strong>
           </div>
           <div class="stat-card">
-            <span>Страниц в процессе</span>
-            <strong id="pagesInProgress">0</strong>
+            <span>В процессе</span>
+            <strong id="activeBooks">0</strong>
           </div>
         </div>
       </header>
@@ -43,10 +43,21 @@
         <section class="panel form-panel">
           <div class="panel-heading">
             <h2>Добавить книгу</h2>
-            <p>Новая запись появится в списке ниже.</p>
+            <p>Можно выбрать из каталога или заполнить вручную.</p>
           </div>
 
           <form id="bookForm" class="book-form">
+            <label>
+              Каталог популярных книг
+              <input
+                type="search"
+                id="catalogSearch"
+                list="popularBooksList"
+                placeholder="Начни вводить название или автора"
+              />
+            </label>
+            <datalist id="popularBooksList"></datalist>
+
             <label>
               Название
               <input type="text" id="title" name="title" required />
@@ -59,16 +70,35 @@
 
             <div class="two-columns">
               <label>
-                Всего страниц
-                <input type="number" id="pages" name="pages" min="1" required />
+                Формат
+                <select id="format" name="format">
+                  <option value="reading">Читаю текст</option>
+                  <option value="audio">Слушаю аудио</option>
+                  <option value="both">Текст и аудио</option>
+                </select>
               </label>
 
               <label>
-                Прочитано страниц
+                Единица прогресса
+                <select id="unit" name="unit">
+                  <option value="pages">Страницы</option>
+                  <option value="minutes">Минуты</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="two-columns">
+              <label>
+                Общий объем
+                <input type="number" id="totalAmount" name="totalAmount" min="1" required />
+              </label>
+
+              <label>
+                Уже пройдено
                 <input
                   type="number"
-                  id="currentPage"
-                  name="currentPage"
+                  id="currentAmount"
+                  name="currentAmount"
                   min="0"
                   value="0"
                   required
@@ -79,9 +109,9 @@
             <label>
               Статус
               <select id="status" name="status">
-                <option value="planned">Хочу прочитать</option>
-                <option value="reading">Читаю</option>
-                <option value="finished">Прочитано</option>
+                <option value="planned">Хочу познакомиться</option>
+                <option value="reading">В процессе</option>
+                <option value="finished">Завершено</option>
               </select>
             </label>
 
@@ -91,11 +121,11 @@
                 id="notes"
                 name="notes"
                 rows="4"
-                placeholder="Что хочешь запомнить об этой книге?"
+                placeholder="Любимая мысль, герой или что хочется запомнить"
               ></textarea>
             </label>
 
-            <button type="submit" class="primary-button">Сохранить книгу</button>
+            <button type="submit" class="primary-button">Сохранить в трекер</button>
           </form>
         </section>
 
@@ -103,7 +133,7 @@
           <div class="shelf-toolbar">
             <div class="panel-heading">
               <h2>Моя полка</h2>
-              <p>Фильтруй список и обновляй прогресс по мере чтения.</p>
+              <p>Фильтруй библиотеку, меняй прогресс и делись записью о книге.</p>
             </div>
 
             <div class="toolbar-controls">
@@ -120,9 +150,9 @@
                 <span class="visually-hidden">Фильтр по статусу</span>
                 <select id="statusFilter">
                   <option value="all">Все статусы</option>
-                  <option value="planned">Хочу прочитать</option>
-                  <option value="reading">Читаю</option>
-                  <option value="finished">Прочитано</option>
+                  <option value="planned">Хочу познакомиться</option>
+                  <option value="reading">В процессе</option>
+                  <option value="finished">Завершено</option>
                 </select>
               </label>
             </div>
@@ -130,7 +160,7 @@
 
           <div id="booksList" class="books-list"></div>
           <div id="emptyState" class="empty-state">
-            Пока пусто. Добавь первую книгу и начни собирать свою полку.
+            Полка пока пустая. Добавь первую книгу или выбери что-то из каталога.
           </div>
         </section>
       </main>
@@ -140,13 +170,19 @@
       <article class="book-card">
         <div class="book-card-top">
           <div>
-            <span class="status-badge"></span>
+            <div class="badge-row">
+              <span class="status-badge"></span>
+              <span class="format-badge"></span>
+            </div>
             <h3 class="book-title"></h3>
             <p class="book-author"></p>
           </div>
-          <button type="button" class="delete-button" aria-label="Удалить книгу">
-            Удалить
-          </button>
+          <div class="card-actions">
+            <button type="button" class="share-button">Поделиться</button>
+            <button type="button" class="delete-button" aria-label="Удалить книгу">
+              Удалить
+            </button>
+          </div>
         </div>
 
         <div class="progress-block">
@@ -163,15 +199,32 @@
           <label>
             Статус
             <select class="card-status">
-              <option value="planned">Хочу прочитать</option>
-              <option value="reading">Читаю</option>
-              <option value="finished">Прочитано</option>
+              <option value="planned">Хочу познакомиться</option>
+              <option value="reading">В процессе</option>
+              <option value="finished">Завершено</option>
             </select>
           </label>
 
           <label>
-            Текущая страница
-            <input type="number" class="card-page" min="0" />
+            Формат
+            <select class="card-format">
+              <option value="reading">Текст</option>
+              <option value="audio">Аудио</option>
+              <option value="both">Текст + аудио</option>
+            </select>
+          </label>
+
+          <label>
+            Единица
+            <select class="card-unit">
+              <option value="pages">Страницы</option>
+              <option value="minutes">Минуты</option>
+            </select>
+          </label>
+
+          <label>
+            Текущий прогресс
+            <input type="number" class="card-amount" min="0" />
           </label>
         </div>
 
