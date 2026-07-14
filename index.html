@@ -7,25 +7,54 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">BookFlow</p>
-          <h1>Трекер книг, чтения и аудиокниг в одном месте</h1>
-          <p class="hero-text">
-            Собирай свою полку с нуля, выбирай книги из популярного каталога,
-            отмечай прочитанное или прослушанное и делись прогрессом.
-          </p>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="img">
+              <path class="brand-book" d="M7 12.5c0-2 1.5-3.5 3.5-3.5H22c2.2 0 4 1.8 4 4v25c0 .6-.6 1-1.1.7-1.3-.8-3.1-1.2-5.1-1.2H10.5A3.5 3.5 0 0 1 7 34V12.5Z" />
+              <path class="brand-book" d="M41 12.5c0-2-1.5-3.5-3.5-3.5H26c-2.2 0-4 1.8-4 4v25c0 .6.6 1 1.1.7 1.3-.8 3.1-1.2 5.1-1.2h9.3A3.5 3.5 0 0 0 41 34V12.5Z" />
+              <path class="brand-cat" d="M16 24.5c0-1.5.4-3 1.3-4.2l-1-4.7 4.4 2.2a8.9 8.9 0 0 1 6.6 0l4.4-2.2-1 4.7a7.2 7.2 0 0 1 1.3 4.2c0 4.5-3.6 7.5-8 7.5s-8-3-8-7.5Z" />
+              <path class="brand-eye" d="M21 24.4a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM27 24.4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+            </svg>
+          </div>
+          <div>
+            <p class="eyebrow">BookFlow</p>
+            <h1>Трекер чтения и аудиокниг</h1>
+          </div>
         </div>
-        <div class="hero-stats">
+
+        <div class="topbar-actions">
+          <button type="button" id="themeToggle" class="icon-button" aria-label="Переключить тему" title="Переключить тему">
+            <svg class="theme-icon theme-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" />
+            </svg>
+            <svg class="theme-icon theme-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 15.5A8 8 0 0 1 8.5 4 7 7 0 1 0 20 15.5Z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="hero-grid">
+        <article class="hero-card">
+          <h2>Личная полка и каталог популярных книг</h2>
+          <p id="dailyQuote" class="daily-quote">
+            Добавляй книги вручную, отмечай аудиоформат и смотри прогресс
+            по тематическим подборкам.
+          </p>
+        </article>
+
+        <aside class="stats-panel">
           <div class="stat-card">
-            <span>Всего в трекере</span>
+            <span>Книг в полке</span>
             <strong id="totalBooks">0</strong>
           </div>
           <div class="stat-card">
@@ -33,135 +62,227 @@
             <strong id="completedBooks">0</strong>
           </div>
           <div class="stat-card">
-            <span>В процессе</span>
-            <strong id="activeBooks">0</strong>
+            <span>Из 1000 отмечено</span>
+            <strong id="catalogCompleted">0</strong>
           </div>
-        </div>
-      </header>
+        </aside>
+      </section>
 
-      <main class="layout">
-        <section class="panel form-panel">
-          <div class="panel-heading">
-            <h2>Добавить книгу</h2>
-            <p>Можно выбрать из каталога или заполнить вручную.</p>
+      <nav class="tabs" aria-label="Разделы">
+        <button type="button" class="tab-button is-active" data-tab="shelf">
+          Моя полка
+        </button>
+        <button type="button" class="tab-button" data-tab="catalog">
+          Популярные
+        </button>
+        <button type="button" class="tab-button" data-tab="dataviz">
+          Картография
+        </button>
+      </nav>
+
+      <main>
+        <section class="tab-panel is-active" data-panel="shelf">
+          <div class="main-grid">
+            <section class="panel form-panel">
+              <div class="panel-heading">
+                <h2>Добавить книгу</h2>
+                <p>Выбери книгу из списка или заполни карточку сама.</p>
+              </div>
+
+              <form id="bookForm" class="book-form">
+                <label>
+                  Книга из списка
+                  <input
+                    type="search"
+                    id="catalogSearch"
+                    list="popularBooksList"
+                    placeholder="Начни вводить название или автора"
+                  />
+                </label>
+                <datalist id="popularBooksList"></datalist>
+
+                <label>
+                  Название
+                  <input type="text" id="title" name="title" required />
+                </label>
+
+                <label>
+                  Автор
+                  <input type="text" id="author" name="author" required />
+                </label>
+
+                <div class="two-columns">
+                  <label>
+                    Формат
+                    <select id="format" name="format">
+                      <option value="reading">Читаю</option>
+                      <option value="audio">Слушаю</option>
+                      <option value="both">Читаю и слушаю</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Единица
+                    <select id="unit" name="unit">
+                      <option value="pages">Страницы</option>
+                      <option value="minutes">Минуты</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="two-columns">
+                  <label>
+                    Всего
+                    <input type="number" id="totalAmount" name="totalAmount" min="1" required />
+                  </label>
+
+                  <label>
+                    Пройдено
+                    <input
+                      type="number"
+                      id="currentAmount"
+                      name="currentAmount"
+                      min="0"
+                      value="0"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  Статус
+                  <select id="status" name="status">
+                    <option value="planned">В планах</option>
+                    <option value="reading">В процессе</option>
+                    <option value="finished">Завершено</option>
+                  </select>
+                </label>
+
+                <label>
+                  Заметка
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    rows="4"
+                    placeholder="Короткая мысль, цитата или впечатление"
+                  ></textarea>
+                </label>
+
+                <button type="submit" class="primary-button">Добавить на полку</button>
+              </form>
+            </section>
+
+            <section class="panel shelf-panel">
+              <div class="shelf-toolbar">
+                <div class="panel-heading">
+                  <h2>Моя полка</h2>
+                  <p>Редактируй прогресс и копируй текст для шеринга.</p>
+                </div>
+
+                <div class="toolbar-controls">
+                  <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Поиск по названию или автору"
+                  />
+                  <select id="statusFilter">
+                    <option value="all">Все статусы</option>
+                    <option value="planned">В планах</option>
+                    <option value="reading">В процессе</option>
+                    <option value="finished">Завершено</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="booksList" class="books-list"></div>
+              <div id="emptyState" class="empty-state">
+                Полка пока пустая. Добавь первую книгу.
+              </div>
+            </section>
           </div>
-
-          <form id="bookForm" class="book-form">
-            <label>
-              Каталог популярных книг
-              <input
-                type="search"
-                id="catalogSearch"
-                list="popularBooksList"
-                placeholder="Начни вводить название или автора"
-              />
-            </label>
-            <datalist id="popularBooksList"></datalist>
-
-            <label>
-              Название
-              <input type="text" id="title" name="title" required />
-            </label>
-
-            <label>
-              Автор
-              <input type="text" id="author" name="author" required />
-            </label>
-
-            <div class="two-columns">
-              <label>
-                Формат
-                <select id="format" name="format">
-                  <option value="reading">Читаю текст</option>
-                  <option value="audio">Слушаю аудио</option>
-                  <option value="both">Текст и аудио</option>
-                </select>
-              </label>
-
-              <label>
-                Единица прогресса
-                <select id="unit" name="unit">
-                  <option value="pages">Страницы</option>
-                  <option value="minutes">Минуты</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="two-columns">
-              <label>
-                Общий объем
-                <input type="number" id="totalAmount" name="totalAmount" min="1" required />
-              </label>
-
-              <label>
-                Уже пройдено
-                <input
-                  type="number"
-                  id="currentAmount"
-                  name="currentAmount"
-                  min="0"
-                  value="0"
-                  required
-                />
-              </label>
-            </div>
-
-            <label>
-              Статус
-              <select id="status" name="status">
-                <option value="planned">Хочу познакомиться</option>
-                <option value="reading">В процессе</option>
-                <option value="finished">Завершено</option>
-              </select>
-            </label>
-
-            <label>
-              Заметка
-              <textarea
-                id="notes"
-                name="notes"
-                rows="4"
-                placeholder="Любимая мысль, герой или что хочется запомнить"
-              ></textarea>
-            </label>
-
-            <button type="submit" class="primary-button">Сохранить в трекер</button>
-          </form>
         </section>
 
-        <section class="panel shelf-panel">
-          <div class="shelf-toolbar">
-            <div class="panel-heading">
-              <h2>Моя полка</h2>
-              <p>Фильтруй библиотеку, меняй прогресс и делись записью о книге.</p>
-            </div>
+        <section class="tab-panel" data-panel="catalog">
+          <section class="panel catalog-panel">
+            <div class="catalog-header">
+              <div class="panel-heading">
+                <h2>Популярные книги</h2>
+                <p>
+                  Книги разбиты по темам, а прогресс подтягивается из твоей полки.
+                </p>
+              </div>
 
-            <div class="toolbar-controls">
-              <label class="search-control">
-                <span class="visually-hidden">Поиск по книгам</span>
+              <div class="catalog-controls">
                 <input
                   type="search"
-                  id="searchInput"
-                  placeholder="Поиск по названию или автору"
+                  id="catalogFilter"
+                  placeholder="Поиск по 1000 книгам"
                 />
-              </label>
-
-              <label>
-                <span class="visually-hidden">Фильтр по статусу</span>
-                <select id="statusFilter">
-                  <option value="all">Все статусы</option>
-                  <option value="planned">Хочу познакомиться</option>
-                  <option value="reading">В процессе</option>
-                  <option value="finished">Завершено</option>
+                <select id="catalogCategoryFilter">
+                  <option value="all">Все темы</option>
+                  <option value="russian">Русская литература</option>
+                  <option value="foreign">Зарубежная литература</option>
+                  <option value="nonfiction">Нонфикшн</option>
+                  <option value="fantasy">Фантастика и фэнтези</option>
+                  <option value="modern">Современная проза</option>
+                  <option value="dataviz">Картография</option>
                 </select>
-              </label>
+                <select id="catalogStatusFilter">
+                  <option value="all">Все</option>
+                  <option value="finished">Только завершенные</option>
+                  <option value="active">Только начатые</option>
+                  <option value="new">Только не начатые</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div id="booksList" class="books-list"></div>
-          <div id="emptyState" class="empty-state">
-            Полка пока пустая. Добавь первую книгу или выбери что-то из каталога.
-          </div>
+            <div class="catalog-progress-card">
+              <div>
+                <p class="mini-label">Общий прогресс</p>
+                <strong id="catalogPercent">0%</strong>
+              </div>
+              <div id="catalogShelfProgress" class="book-spine-progress large"></div>
+            </div>
+
+            <div id="catalogList" class="catalog-list"></div>
+          </section>
+        </section>
+
+        <section class="tab-panel" data-panel="dataviz">
+          <section class="panel catalog-panel">
+            <div class="catalog-header">
+              <div class="panel-heading">
+                <h2>Картография</h2>
+                <p>
+                  Подборка про карты, GIS, тематическое картографирование и историю картографии.
+                </p>
+              </div>
+
+              <div class="data-viz-controls">
+                <input
+                  type="search"
+                  id="dataVizFilter"
+                  placeholder="Поиск по книгам и авторам"
+                />
+                <select id="dataVizStatusFilter">
+                  <option value="all">Все</option>
+                  <option value="finished">Завершенные</option>
+                  <option value="active">Начатые</option>
+                  <option value="new">Не начатые</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="catalog-progress-card">
+              <div>
+                <p class="mini-label">Прогресс подборки</p>
+                <strong id="dataVizPercent">0%</strong>
+              </div>
+              <div id="dataVizShelfProgress" class="book-spine-progress large"></div>
+            </div>
+
+            <div id="dataVizList" class="catalog-list"></div>
+          </section>
         </section>
       </main>
     </div>
@@ -178,10 +299,8 @@
             <p class="book-author"></p>
           </div>
           <div class="card-actions">
-            <button type="button" class="share-button">Поделиться</button>
-            <button type="button" class="delete-button" aria-label="Удалить книгу">
-              Удалить
-            </button>
+            <button type="button" class="ghost-button share-button">Поделиться</button>
+            <button type="button" class="danger-button delete-button">Удалить</button>
           </div>
         </div>
 
@@ -190,16 +309,14 @@
             <span class="progress-label"></span>
             <span class="progress-percent"></span>
           </div>
-          <div class="progress-bar">
-            <div class="progress-fill"></div>
-          </div>
+          <div class="book-spine-progress"></div>
         </div>
 
         <div class="card-controls">
           <label>
             Статус
             <select class="card-status">
-              <option value="planned">Хочу познакомиться</option>
+              <option value="planned">В планах</option>
               <option value="reading">В процессе</option>
               <option value="finished">Завершено</option>
             </select>
@@ -208,9 +325,9 @@
           <label>
             Формат
             <select class="card-format">
-              <option value="reading">Текст</option>
-              <option value="audio">Аудио</option>
-              <option value="both">Текст + аудио</option>
+              <option value="reading">Читаю</option>
+              <option value="audio">Слушаю</option>
+              <option value="both">Читаю и слушаю</option>
             </select>
           </label>
 
@@ -229,6 +346,19 @@
         </div>
 
         <p class="book-notes"></p>
+      </article>
+    </template>
+
+    <template id="catalogItemTemplate">
+      <article class="catalog-item">
+        <div class="catalog-item-main">
+          <h3 class="catalog-title"></h3>
+          <p class="catalog-author"></p>
+        </div>
+        <div class="catalog-item-side">
+          <span class="catalog-state"></span>
+          <div class="book-spine-progress compact"></div>
+        </div>
       </article>
     </template>
 
