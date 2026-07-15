@@ -406,6 +406,27 @@ textarea {
   color: var(--text);
 }
 
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.book-card .icon-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: rgba(246, 240, 230, 0.72);
+}
+
+.book-card .delete-button {
+  color: var(--danger);
+}
+
+.share-button[data-copied="true"] {
+  color: var(--primary);
+}
+
 .icon-button:hover,
 .ghost-button:hover,
 .danger-button:hover {
@@ -535,8 +556,12 @@ body[data-theme="dark"] .theme-moon {
   gap: 8px;
 }
 
+.card-actions {
+  flex-wrap: nowrap;
+  align-items: start;
+}
+
 .status-badge,
-.format-badge,
 .catalog-state {
   min-height: 26px;
   display: inline-flex;
@@ -550,10 +575,6 @@ body[data-theme="dark"] .theme-moon {
   font-family: "Space Mono", monospace;
   font-size: 11px;
   font-weight: 700;
-}
-
-.format-badge {
-  background: rgba(255, 255, 255, 0.34);
 }
 
 .book-title,
@@ -650,12 +671,11 @@ body[data-theme="dark"] .theme-moon {
 
 .card-controls {
   margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
-.card-controls input,
-.card-controls select,
-.book-card .ghost-button,
-.book-card .danger-button {
+.card-controls input {
   background: rgba(246, 240, 230, 0.78);
 }
 

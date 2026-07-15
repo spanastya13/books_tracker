@@ -392,6 +392,7 @@ renderBooks();
 renderCatalog();
 renderDataVizBooks();
 renderStats();
+openSharedBookFromUrl();
 
 themeToggle.addEventListener("click", toggleTheme);
 catalogSearch.addEventListener("change", applyCatalogSelection);
@@ -514,62 +515,35 @@ function renderBooks() {
 
   filteredBooks.forEach((book) => {
     const fragment = bookCardTemplate.content.cloneNode(true);
+    const card = fragment.querySelector(".book-card");
     const badge = fragment.querySelector(".status-badge");
-    const formatBadge = fragment.querySelector(".format-badge");
     const title = fragment.querySelector(".book-title");
     const author = fragment.querySelector(".book-author");
     const progressLabel = fragment.querySelector(".progress-label");
     const progressPercent = fragment.querySelector(".progress-percent");
     const progressShelf = fragment.querySelector(".book-spine-progress");
     const notes = fragment.querySelector(".book-notes");
-    const statusSelect = fragment.querySelector(".card-status");
-    const formatSelect = fragment.querySelector(".card-format");
-    const unitSelect = fragment.querySelector(".card-unit");
     const amountInput = fragment.querySelector(".card-amount");
     const shareButton = fragment.querySelector(".share-button");
     const deleteButton = fragment.querySelector(".delete-button");
     const progress = getProgress(book.currentAmount, book.totalAmount);
 
     badge.textContent = statusLabels[book.status];
-    formatBadge.textContent = formatLabels[book.format];
     title.textContent = book.title;
     author.textContent = book.author;
     progressLabel.textContent =
       `${book.currentAmount} из ${book.totalAmount} ${unitLabels[book.unit]}`;
     progressPercent.textContent = `${progress}%`;
     notes.textContent = book.notes || "Без заметок";
-    statusSelect.value = book.status;
-    formatSelect.value = book.format;
-    unitSelect.value = book.unit;
     amountInput.value = String(book.currentAmount);
     amountInput.max = String(book.totalAmount);
 
     renderSpines(progressShelf, progress, book.status);
-    fragment.querySelector(".book-card").addEventListener("click", (event) => {
+    card.addEventListener("click", (event) => {
       if (event.target.closest("button, input, select, textarea")) {
         return;
       }
       openBookDetails(book);
-    });
-
-    statusSelect.addEventListener("change", (event) => {
-      const nextStatus = event.target.value;
-      book.status = nextStatus;
-      book.currentAmount = normalizeCurrentAmount(book.currentAmount, book.totalAmount, book.status);
-      persistAndRefresh();
-    });
-
-    formatSelect.addEventListener("change", (event) => {
-      book.format = event.target.value;
-      if (book.format === "audio" && book.unit === "pages") {
-        book.unit = "minutes";
-      }
-      persistAndRefresh();
-    });
-
-    unitSelect.addEventListener("change", (event) => {
-      book.unit = event.target.value;
-      persistAndRefresh();
     });
 
     amountInput.addEventListener("change", (event) => {
@@ -584,15 +558,14 @@ function renderBooks() {
     });
 
     shareButton.addEventListener("click", async () => {
-      const text = buildShareText(book);
-      try {
-        await navigator.clipboard.writeText(text);
-        shareButton.textContent = "Скопировано";
+      const shared = await shareBook(book);
+      if (shared) {
+        shareButton.dataset.copied = "true";
+        shareButton.setAttribute("aria-label", "Скопировано");
         window.setTimeout(() => {
-          shareButton.textContent = "Поделиться";
+          shareButton.dataset.copied = "false";
+          shareButton.setAttribute("aria-label", "Поделиться");
         }, 1500);
-      } catch {
-        window.alert(text);
       }
     });
 
@@ -649,6 +622,7 @@ function renderCatalog() {
       const author = fragment.querySelector(".catalog-author");
       const stateBadge = fragment.querySelector(".catalog-state");
       const shelf = fragment.querySelector(".book-spine-progress");
+      const item = fragment.querySelector(".catalog-item");
       const state = getCatalogState(book);
       const progress = getCatalogProgress(book);
 
@@ -656,7 +630,7 @@ function renderCatalog() {
       author.textContent = book.author;
       stateBadge.textContent = statusLabels[state];
       renderSpines(shelf, progress, state);
-      fragment.querySelector(".catalog-item").addEventListener("click", () => openBookDetails(book));
+      item.addEventListener("click", () => openBookDetails(book));
 
       section.appendChild(fragment);
     });
@@ -699,6 +673,7 @@ function renderDataVizBooks() {
     const author = fragment.querySelector(".catalog-author");
     const stateBadge = fragment.querySelector(".catalog-state");
     const shelf = fragment.querySelector(".book-spine-progress");
+    const item = fragment.querySelector(".catalog-item");
     const state = getCatalogState(book);
     const progress = getCatalogProgress(book);
 
@@ -706,7 +681,7 @@ function renderDataVizBooks() {
     author.textContent = book.author;
     stateBadge.textContent = statusLabels[state];
     renderSpines(shelf, progress, state);
-    fragment.querySelector(".catalog-item").addEventListener("click", () => openBookDetails(book));
+    item.addEventListener("click", () => openBookDetails(book));
 
     dataVizList.appendChild(fragment);
   });
@@ -917,6 +892,87 @@ function buildShareText(book) {
     `Статус: ${statusLabels[book.status]}.`,
     `Прогресс: ${book.currentAmount} из ${book.totalAmount} ${unitLabels[book.unit]}.`,
   ].join(" ");
+}
+
+async function shareBook(book) {
+  const title = `${book.title} — ${book.author}`;
+  const text = buildShareText(book);
+  const url = buildShareUrl(book);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      return true;
+    } catch (error) {
+      if (error.name === "AbortError") {
+        return false;
+      }
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    return true;
+  } catch {
+    window.prompt("Скопируй ссылку на книгу:", url);
+    return true;
+  }
+}
+
+function buildShareUrl(book) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("book", JSON.stringify(buildSharePayload(book)));
+  return url.toString();
+}
+
+function buildSharePayload(book) {
+  return {
+    title: book.title,
+    author: book.author,
+    format: book.format,
+    unit: book.unit,
+    totalAmount: book.totalAmount,
+    currentAmount: book.currentAmount,
+    status: book.status,
+    notes: book.notes,
+  };
+}
+
+function openSharedBookFromUrl() {
+  const sharedBook = getSharedBookFromUrl();
+  if (!sharedBook) {
+    return;
+  }
+
+  const existingBook = getCatalogMatch(sharedBook);
+  openBookDetails(existingBook || sharedBook);
+}
+
+function getSharedBookFromUrl() {
+  const rawBook = new URLSearchParams(window.location.search).get("book");
+  if (!rawBook) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawBook);
+    if (!parsed.title || !parsed.author) {
+      return null;
+    }
+
+    return {
+      title: String(parsed.title),
+      author: String(parsed.author),
+      format: parsed.format || "reading",
+      unit: parsed.unit || "pages",
+      totalAmount: Number(parsed.totalAmount || estimatePages(parsed)),
+      currentAmount: Number(parsed.currentAmount || 0),
+      status: parsed.status || "planned",
+      notes: parsed.notes || "",
+    };
+  } catch {
+    return null;
+  }
 }
 
 function buildCatalog() {
