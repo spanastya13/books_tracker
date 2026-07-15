@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -349,7 +349,7 @@
     <template id="bookCardTemplate">
       <article class="book-card">
         <div class="book-card-top">
-          <div>
+          <div class="book-card-copy">
             <div class="badge-row">
               <span class="status-badge"></span>
             </div>
@@ -434,13 +434,55 @@
             </div>
           </div>
 
-          <p id="dialogDescription" class="book-dialog-description"></p>
+          <section class="dialog-shelf-details" aria-labelledby="dialogShelfTitle">
+            <div class="dialog-section-heading">
+              <div>
+                <p class="dialog-section-label">Личная полка</p>
+                <h3 id="dialogShelfTitle">Мой прогресс</h3>
+              </div>
+              <strong id="dialogProgressPercent">0%</strong>
+            </div>
 
-          <div class="book-links dialog-book-links" aria-label="Ссылки на книгу">
-            <a id="dialogReadLink" class="book-link" target="_blank" rel="noopener">Читать онлайн</a>
-            <a id="dialogListenLink" class="book-link" target="_blank" rel="noopener">Слушать онлайн</a>
-            <a id="dialogBuyLink" class="book-link" target="_blank" rel="noopener">Купить бумажную</a>
-          </div>
+            <div class="dialog-progress-block">
+              <div class="progress-meta">
+                <span id="dialogProgressLabel"></span>
+                <span id="dialogFormat"></span>
+              </div>
+              <div id="dialogProgressSpines" class="book-spine-progress"></div>
+            </div>
+
+            <p id="dialogNotes" class="dialog-notes"></p>
+          </section>
+
+          <section class="dialog-description-section" aria-labelledby="dialogDescriptionTitle">
+            <p class="dialog-section-label">О книге</p>
+            <h3 id="dialogDescriptionTitle">Короткое описание</h3>
+            <p id="dialogDescription" class="book-dialog-description"></p>
+          </section>
+
+          <section class="dialog-services" aria-labelledby="dialogServicesTitle">
+            <div class="dialog-section-heading">
+              <div>
+                <p class="dialog-section-label">Электронная, аудио и бумажная</p>
+                <h3 id="dialogServicesTitle">Где найти книгу</h3>
+              </div>
+            </div>
+
+            <div class="book-links dialog-book-links" aria-label="Ссылки на книгу">
+              <a id="dialogReadLink" class="book-link" target="_blank" rel="noopener">
+                <span>Читать онлайн</span>
+                <small>Яндекс Книги</small>
+              </a>
+              <a id="dialogListenLink" class="book-link" target="_blank" rel="noopener">
+                <span>Слушать</span>
+                <small>Литрес · аудиокниги</small>
+              </a>
+              <a id="dialogBuyLink" class="book-link" target="_blank" rel="noopener">
+                <span>Купить бумажную</span>
+                <small>Читай-город</small>
+              </a>
+            </div>
+          </section>
 
           <label class="dialog-status-control">
             Статус

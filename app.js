@@ -1,6 +1,6 @@
 const STORAGE_KEY = "bookflow-library";
 const THEME_KEY = "bookflow-theme";
-const COVER_CACHE_KEY = "bookflow-cover-cache";
+const COVER_CACHE_KEY = "bookflow-cover-cache-v2";
 const CATALOG_SIZE = 1000;
 const SPINE_COUNT = 20;
 
@@ -59,6 +59,11 @@ const dialogCoverImage = document.getElementById("dialogCoverImage");
 const dialogReadLink = document.getElementById("dialogReadLink");
 const dialogListenLink = document.getElementById("dialogListenLink");
 const dialogBuyLink = document.getElementById("dialogBuyLink");
+const dialogProgressPercent = document.getElementById("dialogProgressPercent");
+const dialogProgressLabel = document.getElementById("dialogProgressLabel");
+const dialogProgressSpines = document.getElementById("dialogProgressSpines");
+const dialogFormat = document.getElementById("dialogFormat");
+const dialogNotes = document.getElementById("dialogNotes");
 
 const statusLabels = {
   planned: "Хочу прочитать",
@@ -662,6 +667,7 @@ function renderCatalog() {
   Object.entries(groupedCatalog).forEach(([category, categoryBooks]) => {
     const section = document.createElement("section");
     section.className = "catalog-section";
+    section.dataset.category = category;
 
     const heading = document.createElement("div");
     heading.className = "catalog-section-heading";
@@ -682,7 +688,7 @@ function renderCatalog() {
       author.textContent = book.author;
       stateBadge.textContent = statusLabels[state];
       renderSpines(shelf, progress, state);
-      item.addEventListener("click", () => openBookDetails(book));
+      makeCatalogItemInteractive(item, book);
 
       section.appendChild(fragment);
     });
@@ -735,9 +741,22 @@ function renderDataVizBooks() {
     author.textContent = book.author;
     stateBadge.textContent = statusLabels[state];
     renderSpines(shelf, progress, state);
-    item.addEventListener("click", () => openBookDetails(book));
+    makeCatalogItemInteractive(item, book);
 
     dataVizList.appendChild(fragment);
+  });
+}
+
+function makeCatalogItemInteractive(item, book) {
+  item.tabIndex = 0;
+  item.setAttribute("role", "button");
+  item.setAttribute("aria-label", `Подробнее: ${book.title}, ${book.author}`);
+  item.addEventListener("click", () => openBookDetails(book));
+  item.addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) return;
+
+    event.preventDefault();
+    openBookDetails(book);
   });
 }
 
@@ -752,6 +771,11 @@ function openBookDetails(book) {
   };
 
   const status = existingBook.status || "planned";
+  const format = existingBook.format || "reading";
+  const unit = existingBook.unit || "pages";
+  const totalAmount = Number(existingBook.totalAmount || meta.pages);
+  const currentAmount = Number(existingBook.currentAmount || 0);
+  const progress = getProgress(currentAmount, totalAmount);
   dialogTitle.textContent = existingBook.title;
   dialogAuthor.textContent = existingBook.author;
   dialogYear.textContent = String(meta.year);
@@ -760,6 +784,12 @@ function openBookDetails(book) {
   dialogDescription.textContent = meta.description;
   dialogStatus.value = status;
   dialogStatusBadge.textContent = statusLabels[status];
+  dialogProgressPercent.textContent = `${progress}%`;
+  dialogProgressLabel.textContent = `${currentAmount} из ${totalAmount} ${unitLabels[unit] || unitLabels.pages}`;
+  dialogFormat.textContent = formatLabels[format] || formatLabels.reading;
+  dialogNotes.textContent = existingBook.notes || "Без заметок";
+  dialogNotes.classList.toggle("is-empty", !existingBook.notes);
+  renderSpines(dialogProgressSpines, progress, status);
   setupBookLinks(existingBook, dialogReadLink, dialogListenLink, dialogBuyLink);
   resetDialogCover();
   loadBookCover(existingBook, dialogCover, dialogCoverImage);
@@ -1001,13 +1031,13 @@ async function loadBookCover(book, cover, image) {
 
   try {
     const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${buildGoogleBooksQuery(book)}&maxResults=1`
+      `https://www.googleapis.com/books/v1/volumes?q=${buildGoogleBooksQuery(book)}&maxResults=5&printType=books`
     );
     const data = await response.json();
-    const coverUrl = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
+    const coverSource = findBestCover(data.items || []);
 
-    if (coverUrl) {
-      const secureCoverUrl = coverUrl.replace("http://", "https://");
+    if (coverSource) {
+      const secureCoverUrl = prepareCoverUrl(coverSource);
       coverCache[key] = secureCoverUrl;
       saveCoverCache();
       applyCoverImage(cover, image, secureCoverUrl);
@@ -1015,6 +1045,31 @@ async function loadBookCover(book, cover, image) {
   } catch {
     cover.classList.add("is-empty");
   }
+}
+
+function findBestCover(items) {
+  const sizes = ["extraLarge", "large", "medium", "small", "thumbnail", "smallThumbnail"];
+
+  for (const item of items) {
+    for (const size of sizes) {
+      const url = item.volumeInfo?.imageLinks?.[size];
+      if (url) {
+        return { url, size };
+      }
+    }
+  }
+
+  return null;
+}
+
+function prepareCoverUrl(cover) {
+  let url = cover.url.replace("http://", "https://").replace("&edge=curl", "");
+
+  if (["thumbnail", "smallThumbnail"].includes(cover.size)) {
+    url = url.replace(/([?&])zoom=\d/, "$1zoom=2");
+  }
+
+  return url;
 }
 
 function applyCoverImage(cover, image, coverUrl) {
