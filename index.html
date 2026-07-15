@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -68,20 +68,52 @@
         </aside>
       </section>
 
-      <nav class="tabs" aria-label="Разделы">
-        <button type="button" class="tab-button is-active" data-tab="shelf">
-          Моя полка
+      <nav class="tabs" role="tablist" aria-label="Разделы">
+        <button
+          type="button"
+          id="tab-shelf"
+          class="tab-button is-active"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-shelf"
+          data-tab="shelf"
+        >
+          Моя полка <span id="shelfTabCount" class="tab-count">0</span>
         </button>
-        <button type="button" class="tab-button" data-tab="catalog">
-          Популярные
+        <button
+          type="button"
+          id="tab-catalog"
+          class="tab-button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-catalog"
+          tabindex="-1"
+          data-tab="catalog"
+        >
+          Популярные <span class="tab-count">1000</span>
         </button>
-        <button type="button" class="tab-button" data-tab="dataviz">
-          Картография
+        <button
+          type="button"
+          id="tab-dataviz"
+          class="tab-button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-dataviz"
+          tabindex="-1"
+          data-tab="dataviz"
+        >
+          Картография <span id="dataVizTabCount" class="tab-count">0</span>
         </button>
       </nav>
 
       <main>
-        <section class="tab-panel is-active" data-panel="shelf">
+        <section
+          id="panel-shelf"
+          class="tab-panel is-active"
+          role="tabpanel"
+          aria-labelledby="tab-shelf"
+          data-panel="shelf"
+        >
           <div class="main-grid">
             <section class="panel form-panel">
               <div class="panel-heading">
@@ -191,6 +223,11 @@
                     <option value="reading">Читаю</option>
                     <option value="finished">Прочитано</option>
                   </select>
+                  <select id="shelfSort">
+                    <option value="default">Без сортировки</option>
+                    <option value="small-first">Сначала маленькие</option>
+                    <option value="big-first">Сначала большие</option>
+                  </select>
                 </div>
               </div>
 
@@ -202,7 +239,13 @@
           </div>
         </section>
 
-        <section class="tab-panel" data-panel="catalog">
+        <section
+          id="panel-catalog"
+          class="tab-panel"
+          role="tabpanel"
+          aria-labelledby="tab-catalog"
+          data-panel="catalog"
+        >
           <section class="panel catalog-panel">
             <div class="catalog-header">
               <div class="panel-heading">
@@ -233,6 +276,11 @@
                   <option value="active">Только начатые</option>
                   <option value="new">Только не начатые</option>
                 </select>
+                <select id="catalogSort">
+                  <option value="default">Без сортировки</option>
+                  <option value="small-first">Сначала маленькие</option>
+                  <option value="big-first">Сначала большие</option>
+                </select>
               </div>
             </div>
 
@@ -248,7 +296,13 @@
           </section>
         </section>
 
-        <section class="tab-panel" data-panel="dataviz">
+        <section
+          id="panel-dataviz"
+          class="tab-panel"
+          role="tabpanel"
+          aria-labelledby="tab-dataviz"
+          data-panel="dataviz"
+        >
           <section class="panel catalog-panel">
             <div class="catalog-header">
               <div class="panel-heading">
@@ -269,6 +323,11 @@
                   <option value="finished">Прочитанные</option>
                   <option value="active">Начатые</option>
                   <option value="new">Не начатые</option>
+                </select>
+                <select id="dataVizSort">
+                  <option value="default">Без сортировки</option>
+                  <option value="small-first">Сначала маленькие</option>
+                  <option value="big-first">Сначала большие</option>
                 </select>
               </div>
             </div>
@@ -346,6 +405,10 @@
     <dialog id="bookDetailsDialog" class="book-dialog">
       <div class="book-dialog-layout">
         <aside class="book-dialog-cover">
+          <div class="book-cover dialog-book-cover" aria-hidden="true">
+            <span>Book</span>
+            <img id="dialogCoverImage" class="book-cover-image" alt="" loading="lazy" />
+          </div>
           <span id="dialogStatusBadge" class="status-badge"></span>
           <h2 id="dialogTitle"></h2>
           <p id="dialogAuthor"></p>
@@ -372,6 +435,12 @@
           </div>
 
           <p id="dialogDescription" class="book-dialog-description"></p>
+
+          <div class="book-links dialog-book-links" aria-label="Ссылки на книгу">
+            <a id="dialogReadLink" class="book-link" target="_blank" rel="noopener">Читать онлайн</a>
+            <a id="dialogListenLink" class="book-link" target="_blank" rel="noopener">Слушать онлайн</a>
+            <a id="dialogBuyLink" class="book-link" target="_blank" rel="noopener">Купить бумажную</a>
+          </div>
 
           <label class="dialog-status-control">
             Статус

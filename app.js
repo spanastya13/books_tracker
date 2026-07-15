@@ -1,5 +1,6 @@
 const STORAGE_KEY = "bookflow-library";
 const THEME_KEY = "bookflow-theme";
+const COVER_CACHE_KEY = "bookflow-cover-cache";
 const CATALOG_SIZE = 1000;
 const SPINE_COUNT = 20;
 
@@ -8,9 +9,12 @@ const booksList = document.getElementById("booksList");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
+const shelfSort = document.getElementById("shelfSort");
 const totalBooks = document.getElementById("totalBooks");
 const completedBooks = document.getElementById("completedBooks");
 const catalogCompleted = document.getElementById("catalogCompleted");
+const shelfTabCount = document.getElementById("shelfTabCount");
+const dataVizTabCount = document.getElementById("dataVizTabCount");
 const bookCardTemplate = document.getElementById("bookCardTemplate");
 const catalogItemTemplate = document.getElementById("catalogItemTemplate");
 const catalogSearch = document.getElementById("catalogSearch");
@@ -29,11 +33,13 @@ const catalogList = document.getElementById("catalogList");
 const catalogFilter = document.getElementById("catalogFilter");
 const catalogCategoryFilter = document.getElementById("catalogCategoryFilter");
 const catalogStatusFilter = document.getElementById("catalogStatusFilter");
+const catalogSort = document.getElementById("catalogSort");
 const catalogPercent = document.getElementById("catalogPercent");
 const catalogShelfProgress = document.getElementById("catalogShelfProgress");
 const dailyQuote = document.getElementById("dailyQuote");
 const dataVizFilter = document.getElementById("dataVizFilter");
 const dataVizStatusFilter = document.getElementById("dataVizStatusFilter");
+const dataVizSort = document.getElementById("dataVizSort");
 const dataVizPercent = document.getElementById("dataVizPercent");
 const dataVizShelfProgress = document.getElementById("dataVizShelfProgress");
 const dataVizList = document.getElementById("dataVizList");
@@ -48,6 +54,11 @@ const dialogStatus = document.getElementById("dialogStatus");
 const dialogStatusBadge = document.getElementById("dialogStatusBadge");
 const dialogClose = document.getElementById("dialogClose");
 const dialogSaveStatus = document.getElementById("dialogSaveStatus");
+const dialogCover = bookDetailsDialog.querySelector(".dialog-book-cover");
+const dialogCoverImage = document.getElementById("dialogCoverImage");
+const dialogReadLink = document.getElementById("dialogReadLink");
+const dialogListenLink = document.getElementById("dialogListenLink");
+const dialogBuyLink = document.getElementById("dialogBuyLink");
 
 const statusLabels = {
   planned: "Хочу прочитать",
@@ -383,6 +394,7 @@ const baseBooks = [
 
 const generatedCatalog = buildCatalog();
 let books = loadBooks();
+let coverCache = loadCoverCache();
 
 applySavedTheme();
 renderDailyQuote();
@@ -399,11 +411,14 @@ catalogSearch.addEventListener("change", applyCatalogSelection);
 catalogSearch.addEventListener("input", applyCatalogSelection);
 searchInput.addEventListener("input", renderBooks);
 statusFilter.addEventListener("change", renderBooks);
+shelfSort.addEventListener("change", renderBooks);
 catalogFilter.addEventListener("input", renderCatalog);
 catalogCategoryFilter.addEventListener("change", renderCatalog);
 catalogStatusFilter.addEventListener("change", renderCatalog);
+catalogSort.addEventListener("change", renderCatalog);
 dataVizFilter.addEventListener("input", renderDataVizBooks);
 dataVizStatusFilter.addEventListener("change", renderDataVizBooks);
+dataVizSort.addEventListener("change", renderDataVizBooks);
 dialogClose.addEventListener("click", () => bookDetailsDialog.close());
 dialogSaveStatus.addEventListener("click", saveDialogStatus);
 bookDetailsDialog.addEventListener("click", (event) => {
@@ -411,10 +426,27 @@ bookDetailsDialog.addEventListener("click", (event) => {
     bookDetailsDialog.close();
   }
 });
+dialogCoverImage.addEventListener("error", () => {
+  dialogCover.classList.remove("has-cover");
+  dialogCover.classList.add("is-empty");
+});
 
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     renderTabs(button.dataset.tab);
+  });
+
+  button.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const currentIndex = tabButtons.indexOf(button);
+    const nextIndex = (currentIndex + direction + tabButtons.length) % tabButtons.length;
+    const nextButton = tabButtons[nextIndex];
+
+    renderTabs(nextButton.dataset.tab);
+    nextButton.focus();
   });
 });
 
@@ -483,6 +515,19 @@ function loadBooks() {
   }
 }
 
+function loadCoverCache() {
+  try {
+    const raw = localStorage.getItem(COVER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCoverCache() {
+  localStorage.setItem(COVER_CACHE_KEY, JSON.stringify(coverCache));
+}
+
 function persistAndRefresh() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
   renderBooks();
@@ -493,7 +538,10 @@ function persistAndRefresh() {
 
 function renderTabs(activeTab) {
   tabButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.tab === activeTab);
+    const isActive = button.dataset.tab === activeTab;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
   });
 
   tabPanels.forEach((panel) => {
@@ -504,16 +552,18 @@ function renderTabs(activeTab) {
 function renderBooks() {
   const query = searchInput.value.trim().toLowerCase();
   const filter = statusFilter.value;
+  const sort = shelfSort.value;
   const filteredBooks = books.filter((book) => {
     const matchesQuery =
       book.title.toLowerCase().includes(query) || book.author.toLowerCase().includes(query);
     const matchesStatus = filter === "all" || book.status === filter;
     return matchesQuery && matchesStatus;
   });
+  const sortedBooks = sortBooksByVolume(filteredBooks, sort);
 
   booksList.innerHTML = "";
 
-  filteredBooks.forEach((book) => {
+  sortedBooks.forEach((book) => {
     const fragment = bookCardTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".book-card");
     const badge = fragment.querySelector(".status-badge");
@@ -577,13 +627,14 @@ function renderBooks() {
     booksList.appendChild(fragment);
   });
 
-  emptyState.classList.toggle("visible", filteredBooks.length === 0);
+  emptyState.classList.toggle("visible", sortedBooks.length === 0);
 }
 
 function renderCatalog() {
   const query = catalogFilter.value.trim().toLowerCase();
   const categoryFilter = catalogCategoryFilter.value;
   const filter = catalogStatusFilter.value;
+  const sort = catalogSort.value;
   const completedCount = generatedCatalog.filter((book) => getCatalogState(book) === "finished").length;
   const percent = Math.round((completedCount / generatedCatalog.length) * 100);
 
@@ -603,9 +654,10 @@ function renderCatalog() {
       (filter === "new" && state === "planned");
     return matchesQuery && matchesCategory && matchesState;
   });
+  const sortedCatalog = sortBooksByVolume(filteredCatalog, sort);
 
   catalogList.innerHTML = "";
-  const groupedCatalog = groupCatalogByCategory(filteredCatalog);
+  const groupedCatalog = groupCatalogByCategory(sortedCatalog);
 
   Object.entries(groupedCatalog).forEach(([category, categoryBooks]) => {
     const section = document.createElement("section");
@@ -642,6 +694,7 @@ function renderCatalog() {
 function renderDataVizBooks() {
   const query = dataVizFilter.value.trim().toLowerCase();
   const filter = dataVizStatusFilter.value;
+  const sort = dataVizSort.value;
   const collection = dataVizBooks.map(([title, author]) => ({
     title,
     author,
@@ -664,10 +717,11 @@ function renderDataVizBooks() {
       (filter === "new" && state === "planned");
     return matchesQuery && matchesState;
   });
+  const sortedBooks = sortBooksByVolume(filteredBooks, sort);
 
   dataVizList.innerHTML = "";
 
-  filteredBooks.forEach((book) => {
+  sortedBooks.forEach((book) => {
     const fragment = catalogItemTemplate.content.cloneNode(true);
     const title = fragment.querySelector(".catalog-title");
     const author = fragment.querySelector(".catalog-author");
@@ -706,6 +760,9 @@ function openBookDetails(book) {
   dialogDescription.textContent = meta.description;
   dialogStatus.value = status;
   dialogStatusBadge.textContent = statusLabels[status];
+  setupBookLinks(existingBook, dialogReadLink, dialogListenLink, dialogBuyLink);
+  resetDialogCover();
+  loadBookCover(existingBook, dialogCover, dialogCoverImage);
 
   bookDetailsDialog.showModal();
 }
@@ -753,6 +810,8 @@ function saveDialogStatus() {
 function renderStats() {
   totalBooks.textContent = String(books.length);
   completedBooks.textContent = String(books.filter((book) => book.status === "finished").length);
+  shelfTabCount.textContent = String(books.length);
+  dataVizTabCount.textContent = String(dataVizBooks.length);
 }
 
 function renderDailyQuote() {
@@ -826,6 +885,27 @@ function normalizeCurrentAmount(currentAmount, totalAmount, status) {
   return Math.min(currentAmount, totalAmount);
 }
 
+function sortBooksByVolume(collection, sort) {
+  if (sort === "default") {
+    return collection;
+  }
+
+  return [...collection].sort((firstBook, secondBook) => {
+    const firstVolume = getBookVolume(firstBook);
+    const secondVolume = getBookVolume(secondBook);
+    return sort === "big-first" ? secondVolume - firstVolume : firstVolume - secondVolume;
+  });
+}
+
+function getBookVolume(book) {
+  if (book.totalAmount) {
+    return Number(book.unit === "minutes" ? Math.round(book.totalAmount / 1.9) : book.totalAmount);
+  }
+
+  const known = bookDetails[`${book.title}|${book.author}`];
+  return Number(known?.pages || estimatePages(book));
+}
+
 function getProgress(currentAmount, totalAmount) {
   if (!totalAmount) {
     return 0;
@@ -892,6 +972,62 @@ function buildShareText(book) {
     `Статус: ${statusLabels[book.status]}.`,
     `Прогресс: ${book.currentAmount} из ${book.totalAmount} ${unitLabels[book.unit]}.`,
   ].join(" ");
+}
+
+function setupBookLinks(book, readLink, listenLink, buyLink) {
+  const query = buildBookQuery(book);
+  readLink.href = `https://books.yandex.ru/search?text=${query}`;
+  listenLink.href = `https://www.litres.ru/search/?q=${query}&art_types=audiobook`;
+  buyLink.href = `https://www.chitai-gorod.ru/search?phrase=${query}`;
+}
+
+function buildBookQuery(book) {
+  return encodeURIComponent(`${book.title} ${book.author}`);
+}
+
+function resetDialogCover() {
+  dialogCover.classList.remove("has-cover", "is-empty");
+  dialogCoverImage.removeAttribute("src");
+}
+
+async function loadBookCover(book, cover, image) {
+  const key = getBookKey(book);
+  const cachedCover = coverCache[key];
+
+  if (cachedCover) {
+    applyCoverImage(cover, image, cachedCover);
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=${buildGoogleBooksQuery(book)}&maxResults=1`
+    );
+    const data = await response.json();
+    const coverUrl = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
+
+    if (coverUrl) {
+      const secureCoverUrl = coverUrl.replace("http://", "https://");
+      coverCache[key] = secureCoverUrl;
+      saveCoverCache();
+      applyCoverImage(cover, image, secureCoverUrl);
+    }
+  } catch {
+    cover.classList.add("is-empty");
+  }
+}
+
+function applyCoverImage(cover, image, coverUrl) {
+  image.src = coverUrl;
+  cover.classList.add("has-cover");
+}
+
+function buildGoogleBooksQuery(book) {
+  return encodeURIComponent(`intitle:${book.title} inauthor:${book.author}`);
+}
+
+function getBookKey(book) {
+  return `${book.title}|${book.author}`.trim().toLowerCase();
 }
 
 async function shareBook(book) {
