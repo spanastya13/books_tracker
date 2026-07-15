@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -152,9 +152,9 @@
                 <label>
                   Статус
                   <select id="status" name="status">
-                    <option value="planned">В планах</option>
-                    <option value="reading">В процессе</option>
-                    <option value="finished">Завершено</option>
+                    <option value="planned">Хочу прочитать</option>
+                    <option value="reading">Читаю</option>
+                    <option value="finished">Прочитано</option>
                   </select>
                 </label>
 
@@ -187,9 +187,9 @@
                   />
                   <select id="statusFilter">
                     <option value="all">Все статусы</option>
-                    <option value="planned">В планах</option>
-                    <option value="reading">В процессе</option>
-                    <option value="finished">Завершено</option>
+                    <option value="planned">Хочу прочитать</option>
+                    <option value="reading">Читаю</option>
+                    <option value="finished">Прочитано</option>
                   </select>
                 </div>
               </div>
@@ -229,7 +229,7 @@
                 </select>
                 <select id="catalogStatusFilter">
                   <option value="all">Все</option>
-                  <option value="finished">Только завершенные</option>
+                  <option value="finished">Только прочитанные</option>
                   <option value="active">Только начатые</option>
                   <option value="new">Только не начатые</option>
                 </select>
@@ -266,7 +266,7 @@
                 />
                 <select id="dataVizStatusFilter">
                   <option value="all">Все</option>
-                  <option value="finished">Завершенные</option>
+                  <option value="finished">Прочитанные</option>
                   <option value="active">Начатые</option>
                   <option value="new">Не начатые</option>
                 </select>
@@ -316,9 +316,9 @@
           <label>
             Статус
             <select class="card-status">
-              <option value="planned">В планах</option>
-              <option value="reading">В процессе</option>
-              <option value="finished">Завершено</option>
+              <option value="planned">Хочу прочитать</option>
+              <option value="reading">Читаю</option>
+              <option value="finished">Прочитано</option>
             </select>
           </label>
 
@@ -361,6 +361,52 @@
         </div>
       </article>
     </template>
+
+    <dialog id="bookDetailsDialog" class="book-dialog">
+      <div class="book-dialog-layout">
+        <aside class="book-dialog-cover">
+          <span id="dialogStatusBadge" class="status-badge"></span>
+          <h2 id="dialogTitle"></h2>
+          <p id="dialogAuthor"></p>
+        </aside>
+
+        <section class="book-dialog-body">
+          <button type="button" id="dialogClose" class="dialog-close" aria-label="Закрыть">
+            ×
+          </button>
+
+          <div class="book-dialog-meta">
+            <div>
+              <span>Год</span>
+              <strong id="dialogYear"></strong>
+            </div>
+            <div>
+              <span>Страницы</span>
+              <strong id="dialogPages"></strong>
+            </div>
+            <div>
+              <span>Аудио</span>
+              <strong id="dialogAudio"></strong>
+            </div>
+          </div>
+
+          <p id="dialogDescription" class="book-dialog-description"></p>
+
+          <label class="dialog-status-control">
+            Статус
+            <select id="dialogStatus">
+              <option value="planned">Хочу прочитать</option>
+              <option value="reading">Читаю</option>
+              <option value="finished">Прочитано</option>
+            </select>
+          </label>
+
+          <button type="button" id="dialogSaveStatus" class="primary-button">
+            Сохранить статус
+          </button>
+        </section>
+      </div>
+    </dialog>
 
     <script src="app.js"></script>
   </body>

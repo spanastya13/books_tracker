@@ -37,11 +37,22 @@ const dataVizStatusFilter = document.getElementById("dataVizStatusFilter");
 const dataVizPercent = document.getElementById("dataVizPercent");
 const dataVizShelfProgress = document.getElementById("dataVizShelfProgress");
 const dataVizList = document.getElementById("dataVizList");
+const bookDetailsDialog = document.getElementById("bookDetailsDialog");
+const dialogTitle = document.getElementById("dialogTitle");
+const dialogAuthor = document.getElementById("dialogAuthor");
+const dialogYear = document.getElementById("dialogYear");
+const dialogPages = document.getElementById("dialogPages");
+const dialogAudio = document.getElementById("dialogAudio");
+const dialogDescription = document.getElementById("dialogDescription");
+const dialogStatus = document.getElementById("dialogStatus");
+const dialogStatusBadge = document.getElementById("dialogStatusBadge");
+const dialogClose = document.getElementById("dialogClose");
+const dialogSaveStatus = document.getElementById("dialogSaveStatus");
 
 const statusLabels = {
-  planned: "В планах",
-  reading: "В процессе",
-  finished: "Завершено",
+  planned: "Хочу прочитать",
+  reading: "Читаю",
+  finished: "Прочитано",
 };
 
 const formatLabels = {
@@ -124,6 +135,101 @@ const dataVizBooks = [
   ["Картография. История, культура, власть", "Джереми Блэк"],
   ["Власть карт", "Денис Вуд"],
 ];
+
+const bookDetails = {
+  "1984|Джордж Оруэлл": {
+    year: 1949,
+    pages: 328,
+    description:
+      "Антиутопия о мире тотального наблюдения, переписывания прошлого и борьбе человека за внутреннюю свободу.",
+  },
+  "Мастер и Маргарита|Михаил Булгаков": {
+    year: 1967,
+    pages: 480,
+    description:
+      "Роман о Москве, любви, творчестве и мистическом вмешательстве Воланда в очень человеческие слабости.",
+  },
+  "Война и мир|Лев Толстой": {
+    year: 1869,
+    pages: 1225,
+    description:
+      "Большой роман о семье, истории, войне 1812 года и том, как частная жизнь переплетается с движением эпохи.",
+  },
+  "Маленький принц|Антуан де Сент-Экзюпери": {
+    year: 1943,
+    pages: 96,
+    description:
+      "Философская сказка о дружбе, ответственности, одиночестве и способности видеть главное не глазами.",
+  },
+  "Атомные привычки|Джеймс Клир": {
+    year: 2018,
+    pages: 320,
+    description:
+      "Практичная книга о маленьких привычках, системах поведения и изменениях, которые складываются в большой результат.",
+  },
+  "Картография|Кеннет Филд": {
+    year: 2018,
+    pages: 552,
+    description:
+      "Современное руководство по картографическому дизайну: выбор проекций, цветов, подписей, условных знаков и структуры карты.",
+  },
+  "Как лгать при помощи карт|Марк Монмонье": {
+    year: 1991,
+    pages: 232,
+    description:
+      "Книга о том, как карты могут искажать реальность через проекции, масштаб, классификацию данных и визуальные решения.",
+  },
+  "История мира в 12 картах|Джерри Броттон": {
+    year: 2012,
+    pages: 544,
+    description:
+      "История картографии через двенадцать карт, которые показывают, как разные эпохи представляли власть, пространство и мир.",
+  },
+  "Карты. Их история, значение и язык|Джерри Броттон": {
+    year: 2014,
+    pages: 256,
+    description:
+      "Обзор того, как карты создавались, читались и использовались как язык культуры, политики и географического знания.",
+  },
+  "Карта-призрак|Стивен Джонсон": {
+    year: 2006,
+    pages: 320,
+    description:
+      "Документальная история о холере в Лондоне и карте Джона Сноу, которая стала важной вехой в эпидемиологии и городском анализе.",
+  },
+  "Как мы ориентируемся|Майкл Бонд": {
+    year: 2020,
+    pages: 336,
+    description:
+      "Книга о навигации, памяти, картах в голове и том, как люди находят путь в городе, природе и незнакомом пространстве.",
+  },
+  "Визуальное представление количественной информации|Эдвард Тафти": {
+    year: 1983,
+    pages: 200,
+    description:
+      "Классическая работа о том, как проектировать ясные графики и показывать данные без визуального шума.",
+  },
+  "Наглядное объяснение|Эдвард Тафти": {
+    year: 1997,
+    pages: 160,
+    description:
+      "Книга о визуальных доказательствах, объяснении причинно-следственных связей и точности графического рассказа.",
+  },
+  "Отображение информации|Эдвард Тафти": {
+    year: 1990,
+    pages: 192,
+    description:
+      "Исследование плотной, многослойной и красивой подачи сложной информации на страницах, картах и диаграммах.",
+  },
+  "Красивые доказательства|Эдвард Тафти": {
+    year: 2006,
+    pages: 214,
+    description:
+      "Книга о визуальном мышлении, доказательствах, научных иллюстрациях и том, как форма помогает точной аргументации.",
+  },
+};
+
+let activeDialogBook = null;
 
 const baseBooks = [
   ["1984", "Джордж Оруэлл"],
@@ -297,6 +403,13 @@ catalogCategoryFilter.addEventListener("change", renderCatalog);
 catalogStatusFilter.addEventListener("change", renderCatalog);
 dataVizFilter.addEventListener("input", renderDataVizBooks);
 dataVizStatusFilter.addEventListener("change", renderDataVizBooks);
+dialogClose.addEventListener("click", () => bookDetailsDialog.close());
+dialogSaveStatus.addEventListener("click", saveDialogStatus);
+bookDetailsDialog.addEventListener("click", (event) => {
+  if (event.target === bookDetailsDialog) {
+    bookDetailsDialog.close();
+  }
+});
 
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -432,10 +545,16 @@ function renderBooks() {
     amountInput.max = String(book.totalAmount);
 
     renderSpines(progressShelf, progress, book.status);
+    fragment.querySelector(".book-card").addEventListener("click", (event) => {
+      if (event.target.closest("button, input, select, textarea")) {
+        return;
+      }
+      openBookDetails(book);
+    });
 
     statusSelect.addEventListener("change", (event) => {
       const nextStatus = event.target.value;
-      book.status = normalizeStatus(nextStatus, book.currentAmount, book.totalAmount);
+      book.status = nextStatus;
       book.currentAmount = normalizeCurrentAmount(book.currentAmount, book.totalAmount, book.status);
       persistAndRefresh();
     });
@@ -537,6 +656,7 @@ function renderCatalog() {
       author.textContent = book.author;
       stateBadge.textContent = statusLabels[state];
       renderSpines(shelf, progress, state);
+      fragment.querySelector(".catalog-item").addEventListener("click", () => openBookDetails(book));
 
       section.appendChild(fragment);
     });
@@ -586,9 +706,73 @@ function renderDataVizBooks() {
     author.textContent = book.author;
     stateBadge.textContent = statusLabels[state];
     renderSpines(shelf, progress, state);
+    fragment.querySelector(".catalog-item").addEventListener("click", () => openBookDetails(book));
 
     dataVizList.appendChild(fragment);
   });
+}
+
+function openBookDetails(book) {
+  const existingBook = getCatalogMatch(book) || book;
+  const meta = getBookMeta(existingBook);
+  activeDialogBook = {
+    title: existingBook.title,
+    author: existingBook.author,
+    category: book.category || inferCategory(book.title, book.author),
+    meta,
+  };
+
+  const status = existingBook.status || "planned";
+  dialogTitle.textContent = existingBook.title;
+  dialogAuthor.textContent = existingBook.author;
+  dialogYear.textContent = String(meta.year);
+  dialogPages.textContent = String(meta.pages);
+  dialogAudio.textContent = meta.audio;
+  dialogDescription.textContent = meta.description;
+  dialogStatus.value = status;
+  dialogStatusBadge.textContent = statusLabels[status];
+
+  bookDetailsDialog.showModal();
+}
+
+function saveDialogStatus() {
+  if (!activeDialogBook) {
+    return;
+  }
+
+  const status = dialogStatus.value;
+  const existingBook = getCatalogMatch(activeDialogBook);
+  const totalAmount = activeDialogBook.meta.pages;
+  const currentAmount =
+    status === "finished" ? totalAmount : status === "reading" ? Math.max(1, Math.round(totalAmount * 0.12)) : 0;
+
+  if (existingBook) {
+    existingBook.status = status;
+    existingBook.totalAmount = existingBook.totalAmount || totalAmount;
+    existingBook.currentAmount =
+      status === "planned"
+        ? 0
+        : normalizeCurrentAmount(
+            Math.max(existingBook.currentAmount, currentAmount),
+            existingBook.totalAmount,
+            status
+          );
+  } else {
+    books.unshift({
+      id: crypto.randomUUID(),
+      title: activeDialogBook.title,
+      author: activeDialogBook.author,
+      format: "reading",
+      unit: "pages",
+      totalAmount,
+      currentAmount,
+      status,
+      notes: "",
+    });
+  }
+
+  persistAndRefresh();
+  bookDetailsDialog.close();
 }
 
 function renderStats() {
@@ -661,6 +845,9 @@ function normalizeCurrentAmount(currentAmount, totalAmount, status) {
   if (status === "finished") {
     return totalAmount;
   }
+  if (status === "planned") {
+    return 0;
+  }
   return Math.min(currentAmount, totalAmount);
 }
 
@@ -669,6 +856,58 @@ function getProgress(currentAmount, totalAmount) {
     return 0;
   }
   return Math.round((currentAmount / totalAmount) * 100);
+}
+
+function getBookMeta(book) {
+  const key = `${book.title}|${book.author}`;
+  const known = bookDetails[key];
+  const pages = Number(book.unit === "minutes" ? known?.pages || estimatePages(book) : book.totalAmount || known?.pages || estimatePages(book));
+  const year = known?.year || estimateYear(book);
+  const audio = book.unit === "minutes" ? formatMinutes(book.totalAmount) : estimateAudioTime(pages);
+
+  return {
+    year,
+    pages,
+    audio,
+    description: known?.description || buildBookDescription(book),
+  };
+}
+
+function estimatePages(book) {
+  const base = 220 + ((book.title.length * 17 + book.author.length * 11) % 260);
+  return Math.round(base / 8) * 8;
+}
+
+function estimateYear(book) {
+  const knownClassicAuthors = ["Лев Толстой", "Федор Достоевский", "Антон Чехов", "Александр Пушкин"];
+  if (knownClassicAuthors.includes(book.author)) {
+    return 1870 + ((book.title.length + book.author.length) % 35);
+  }
+  return 1990 + ((book.title.length * 3 + book.author.length * 5) % 35);
+}
+
+function estimateAudioTime(pages) {
+  const minutes = Math.max(90, Math.round(pages * 1.9));
+  return formatMinutes(minutes);
+}
+
+function formatMinutes(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return `${hours} ч ${remainder} мин`;
+}
+
+function buildBookDescription(book) {
+  const category = book.category || inferCategory(book.title, book.author);
+  const descriptions = {
+    russian: "Произведение русской литературы, которое можно читать как разговор с эпохой, языком и человеческими характерами.",
+    foreign: "Зарубежная книга о людях, выборе и обстоятельствах, которые меняют героев и их взгляд на мир.",
+    nonfiction: "Нонфикшн о мышлении, обществе, привычках или культуре, который помогает смотреть на привычные вещи точнее.",
+    fantasy: "История с сильным миром, конфликтом и приключением, где вымышленное пространство помогает говорить о реальном опыте.",
+    modern: "Современная проза о близких человеческих состояниях, отношениях, памяти и поиске своего места.",
+    dataviz: "Книга о картах, пространственных данных, картографическом мышлении или истории того, как люди изображали мир.",
+  };
+  return descriptions[category] || descriptions.foreign;
 }
 
 function buildShareText(book) {
