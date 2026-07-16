@@ -3,6 +3,9 @@ const THEME_KEY = "bookflow-theme";
 const COVER_CACHE_KEY = "bookflow-cover-cache-v2";
 const CATALOG_SIZE = 1000;
 const SPINE_COUNT = 20;
+const SUPABASE_URL = "https://sovvobuxpchevblupzch.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Em6Vw6BOPS_EqrU0dAFDZQ_i3JjW4a7";
+const CLOUD_SYNC_DELAY = 350;
 
 const bookForm = document.getElementById("bookForm");
 const booksList = document.getElementById("booksList");
@@ -64,6 +67,21 @@ const dialogProgressLabel = document.getElementById("dialogProgressLabel");
 const dialogProgressSpines = document.getElementById("dialogProgressSpines");
 const dialogFormat = document.getElementById("dialogFormat");
 const dialogNotes = document.getElementById("dialogNotes");
+const authButton = document.getElementById("authButton");
+const authButtonIcon = document.getElementById("authButtonIcon");
+const authButtonLabel = document.getElementById("authButtonLabel");
+const authDialog = document.getElementById("authDialog");
+const authDialogClose = document.getElementById("authDialogClose");
+const authForm = document.getElementById("authForm");
+const authEmail = document.getElementById("authEmail");
+const authSubmit = document.getElementById("authSubmit");
+const authMessage = document.getElementById("authMessage");
+const syncIndicator = document.getElementById("syncIndicator");
+const syncLabel = document.getElementById("syncLabel");
+const supabaseClient = window.supabase?.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 const statusLabels = {
   planned: "Хочу прочитать",
@@ -400,6 +418,11 @@ const baseBooks = [
 const generatedCatalog = buildCatalog();
 let books = loadBooks();
 let coverCache = loadCoverCache();
+let currentUser = null;
+let cloudReady = false;
+let cloudSyncTimer = null;
+let cloudSyncInProgress = false;
+let cloudSyncQueued = false;
 
 applySavedTheme();
 renderDailyQuote();
@@ -410,8 +433,17 @@ renderCatalog();
 renderDataVizBooks();
 renderStats();
 openSharedBookFromUrl();
+initializeSupabase();
 
 themeToggle.addEventListener("click", toggleTheme);
+authButton.addEventListener("click", handleAuthButtonClick);
+authDialogClose.addEventListener("click", () => authDialog.close());
+authForm.addEventListener("submit", handleAuthSubmit);
+authDialog.addEventListener("click", (event) => {
+  if (event.target === authDialog) {
+    authDialog.close();
+  }
+});
 catalogSearch.addEventListener("change", applyCatalogSelection);
 catalogSearch.addEventListener("input", applyCatalogSelection);
 searchInput.addEventListener("input", renderBooks);
@@ -494,30 +526,46 @@ bookForm.addEventListener("submit", (event) => {
   unitInput.value = "pages";
 });
 
-function loadBooks() {
+function loadBooks(storageKey = STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) {
       return [];
     }
 
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed)
-      ? parsed.map((book) => ({
-          id: book.id || crypto.randomUUID(),
-          title: book.title || "",
-          author: book.author || "",
-          format: book.format || "reading",
-          unit: book.unit || "pages",
-          totalAmount: Number(book.totalAmount || 0),
-          currentAmount: Number(book.currentAmount || 0),
-          status: book.status || "planned",
-          notes: book.notes || "",
-        }))
+      ? parsed.map(normalizeStoredBook)
       : [];
   } catch {
     return [];
   }
+}
+
+function normalizeStoredBook(book) {
+  const totalAmount = Math.max(1, Number(book.totalAmount || 1));
+  const currentAmount = Math.min(
+    totalAmount,
+    Math.max(0, Number(book.currentAmount || 0))
+  );
+
+  return {
+    id: isUuid(book.id) ? book.id : crypto.randomUUID(),
+    title: book.title || "",
+    author: book.author || "",
+    format: book.format || "reading",
+    unit: book.unit || "pages",
+    totalAmount,
+    currentAmount,
+    status: book.status || "planned",
+    notes: book.notes || "",
+  };
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value || ""
+  );
 }
 
 function loadCoverCache() {
@@ -534,11 +582,335 @@ function saveCoverCache() {
 }
 
 function persistAndRefresh() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  localStorage.setItem(getActiveStorageKey(), JSON.stringify(books));
+  refreshAllViews();
+
+  if (currentUser && cloudReady) {
+    scheduleCloudSync();
+  } else if (currentUser) {
+    localStorage.setItem(getPendingStorageKey(), "true");
+  }
+}
+
+function refreshAllViews() {
   renderBooks();
   renderCatalog();
   renderDataVizBooks();
   renderStats();
+}
+
+function getActiveStorageKey() {
+  return currentUser ? `${STORAGE_KEY}-${currentUser.id}` : STORAGE_KEY;
+}
+
+function getPendingStorageKey(userId = currentUser?.id) {
+  return `${STORAGE_KEY}-${userId}-pending`;
+}
+
+async function initializeSupabase() {
+  if (!supabaseClient) {
+    setSyncState("error", "Supabase не загрузился", "Проверь подключение к интернету");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setSyncState("error", "Ошибка входа", error.message);
+  } else {
+    await handleAuthSession("INITIAL_SESSION", data.session);
+  }
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "INITIAL_SESSION") {
+      return;
+    }
+
+    window.setTimeout(() => {
+      void handleAuthSession(event, session);
+    }, 0);
+  });
+}
+
+async function handleAuthButtonClick() {
+  if (!currentUser) {
+    authMessage.textContent = "";
+    authMessage.removeAttribute("data-state");
+    authDialog.showModal();
+    window.setTimeout(() => authEmail.focus(), 0);
+    return;
+  }
+
+  authButton.disabled = true;
+  const { error } = await supabaseClient.auth.signOut();
+  authButton.disabled = false;
+
+  if (error) {
+    setSyncState("error", "Не удалось выйти", error.message);
+  }
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+
+  if (!supabaseClient) {
+    showAuthMessage("Supabase не загрузился. Обнови страницу и попробуй снова.", "error");
+    return;
+  }
+
+  if (!["http:", "https:"].includes(window.location.protocol)) {
+    showAuthMessage("Вход работает на опубликованной странице GitHub Pages.", "error");
+    return;
+  }
+
+  const email = authEmail.value.trim();
+  if (!email) {
+    return;
+  }
+
+  authSubmit.disabled = true;
+  showAuthMessage("Отправляю ссылку...", "progress");
+
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectTo,
+    },
+  });
+
+  authSubmit.disabled = false;
+
+  if (error) {
+    showAuthMessage(error.message, "error");
+    return;
+  }
+
+  showAuthMessage("Ссылка отправлена. Открой письмо на этом устройстве.", "success");
+}
+
+function showAuthMessage(message, state) {
+  authMessage.textContent = message;
+  authMessage.dataset.state = state;
+}
+
+async function handleAuthSession(event, session) {
+  const previousUserId = currentUser?.id || null;
+  currentUser = session?.user || null;
+  updateAuthUi();
+
+  if (!currentUser) {
+    cloudReady = false;
+    window.clearTimeout(cloudSyncTimer);
+
+    if (event === "SIGNED_OUT") {
+      books = [];
+      refreshAllViews();
+    }
+
+    setSyncState("local", "Локально", "Войди, чтобы синхронизировать полку");
+    return;
+  }
+
+  if (previousUserId === currentUser.id && cloudReady) {
+    return;
+  }
+
+  setSyncState("syncing", "Синхронизация", currentUser.email || "");
+
+  try {
+    await migrateLocalBooksToCloud();
+    await loadBooksFromCloud();
+    cloudReady = true;
+    setSyncState("synced", "В облаке", currentUser.email || "");
+
+    if (authDialog.open) {
+      authDialog.close();
+    }
+  } catch (error) {
+    cloudReady = false;
+    const cachedBooks = loadBooks(`${STORAGE_KEY}-${currentUser.id}`);
+    if (cachedBooks.length > 0) {
+      books = cachedBooks;
+      refreshAllViews();
+    }
+    setSyncState(
+      "error",
+      "Нужна таблица",
+      "Выполни файл supabase-schema.sql в SQL Editor"
+    );
+    console.error("Supabase sync error:", error);
+  }
+}
+
+function updateAuthUi() {
+  const isSignedIn = Boolean(currentUser);
+  authButtonLabel.textContent = isSignedIn ? "Выйти" : "Войти";
+  authButtonIcon.setAttribute("href", isSignedIn ? "#icon-log-out" : "#icon-user");
+  authButton.title = isSignedIn
+    ? `Выйти из ${currentUser.email || "аккаунта"}`
+    : "Войти и синхронизировать полку";
+}
+
+function setSyncState(state, label, title) {
+  syncIndicator.dataset.state = state;
+  syncLabel.textContent = label;
+  syncIndicator.title = title || label;
+}
+
+async function migrateLocalBooksToCloud() {
+  const hasPendingUserChanges =
+    localStorage.getItem(getPendingStorageKey()) === "true";
+  const localBooks = mergeBooksById(
+    loadBooks(STORAGE_KEY),
+    hasPendingUserChanges
+      ? loadBooks(`${STORAGE_KEY}-${currentUser.id}`)
+      : []
+  );
+
+  if (localBooks.length === 0) {
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("user_books")
+    .upsert(localBooks.map(bookToCloudRow), { onConflict: "id" });
+
+  if (error) {
+    throw error;
+  }
+
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(getPendingStorageKey());
+}
+
+function mergeBooksById(...collections) {
+  const merged = new Map();
+
+  collections.flat().forEach((book) => {
+    merged.set(book.id, book);
+  });
+
+  return Array.from(merged.values());
+}
+
+async function loadBooksFromCloud() {
+  const { data, error } = await supabaseClient
+    .from("user_books")
+    .select(
+      "id, title, author, format, unit, total_amount, current_amount, status, notes, created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  books = (data || []).map(cloudRowToBook);
+  localStorage.setItem(getActiveStorageKey(), JSON.stringify(books));
+  refreshAllViews();
+}
+
+function bookToCloudRow(book) {
+  return {
+    id: book.id,
+    user_id: currentUser.id,
+    title: book.title,
+    author: book.author,
+    format: book.format,
+    unit: book.unit,
+    total_amount: book.totalAmount,
+    current_amount: book.currentAmount,
+    status: book.status,
+    notes: book.notes,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function cloudRowToBook(row) {
+  return normalizeStoredBook({
+    id: row.id,
+    title: row.title,
+    author: row.author,
+    format: row.format,
+    unit: row.unit,
+    totalAmount: row.total_amount,
+    currentAmount: row.current_amount,
+    status: row.status,
+    notes: row.notes,
+  });
+}
+
+function scheduleCloudSync() {
+  window.clearTimeout(cloudSyncTimer);
+  setSyncState("syncing", "Сохраняю", currentUser?.email || "");
+  cloudSyncTimer = window.setTimeout(() => {
+    void syncBooksToCloud();
+  }, CLOUD_SYNC_DELAY);
+}
+
+async function syncBooksToCloud() {
+  if (!currentUser || !cloudReady) {
+    return;
+  }
+
+  if (cloudSyncInProgress) {
+    cloudSyncQueued = true;
+    return;
+  }
+
+  cloudSyncInProgress = true;
+  const userId = currentUser.id;
+
+  try {
+    if (books.length > 0) {
+      const { error: upsertError } = await supabaseClient
+        .from("user_books")
+        .upsert(books.map(bookToCloudRow), { onConflict: "id" });
+
+      if (upsertError) {
+        throw upsertError;
+      }
+    }
+
+    const { data: cloudRows, error: selectError } = await supabaseClient
+      .from("user_books")
+      .select("id");
+
+    if (selectError) {
+      throw selectError;
+    }
+
+    const localIds = new Set(books.map((book) => book.id));
+    const staleIds = (cloudRows || [])
+      .map((row) => row.id)
+      .filter((id) => !localIds.has(id));
+
+    if (staleIds.length > 0) {
+      const { error: deleteError } = await supabaseClient
+        .from("user_books")
+        .delete()
+        .in("id", staleIds);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+    }
+
+    if (currentUser?.id === userId) {
+      localStorage.removeItem(getPendingStorageKey(userId));
+      setSyncState("synced", "В облаке", currentUser.email || "");
+    }
+  } catch (error) {
+    setSyncState("error", "Не сохранено", error.message);
+    console.error("Supabase save error:", error);
+  } finally {
+    cloudSyncInProgress = false;
+
+    if (cloudSyncQueued) {
+      cloudSyncQueued = false;
+      scheduleCloudSync();
+    }
+  }
 }
 
 function renderTabs(activeTab) {
@@ -615,11 +987,16 @@ function renderBooks() {
     shareButton.addEventListener("click", async () => {
       const shared = await shareBook(book);
       if (shared) {
+        const iconUse = shareButton.querySelector("use");
         shareButton.dataset.copied = "true";
         shareButton.setAttribute("aria-label", "Скопировано");
+        shareButton.title = "Скопировано";
+        iconUse?.setAttribute("href", "#icon-check");
         window.setTimeout(() => {
           shareButton.dataset.copied = "false";
           shareButton.setAttribute("aria-label", "Поделиться");
+          shareButton.title = "Поделиться";
+          iconUse?.setAttribute("href", "#icon-share");
         }, 1500);
       }
     });
