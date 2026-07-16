@@ -746,9 +746,11 @@ function updateAuthUi() {
   const isSignedIn = Boolean(currentUser);
   authButtonLabel.textContent = isSignedIn ? "Выйти" : "Войти";
   authButtonIcon.setAttribute("href", isSignedIn ? "#icon-log-out" : "#icon-user");
-  authButton.title = isSignedIn
+  const label = isSignedIn
     ? `Выйти из ${currentUser.email || "аккаунта"}`
     : "Войти и синхронизировать полку";
+  authButton.title = label;
+  authButton.setAttribute("aria-label", label);
 }
 
 function setSyncState(state, label, title) {

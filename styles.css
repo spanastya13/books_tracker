@@ -2168,7 +2168,7 @@ body[data-theme="dark"] .book-link:hover {
 
 .topbar-actions {
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -2207,15 +2207,11 @@ body[data-theme="dark"] .book-link:hover {
 }
 
 .auth-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  white-space: nowrap;
+  flex: 0 0 36px;
 }
 
 .auth-dialog {
-  width: min(440px, calc(100% - 24px));
+  width: min(390px, calc(100% - 24px));
   padding: 0;
   border: 0;
   border-radius: var(--radius-xl);
@@ -2230,8 +2226,8 @@ body[data-theme="dark"] .book-link:hover {
 .auth-card {
   position: relative;
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  gap: 14px;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   background: var(--card);
@@ -2241,19 +2237,19 @@ body[data-theme="dark"] .book-link:hover {
 .auth-heading {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding-right: 36px;
 }
 
 .auth-heading-icon {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 
 .auth-heading h2 {
   margin: 0;
-  font-size: 22px;
-  line-height: 28px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 600;
 }
 
@@ -2261,7 +2257,7 @@ body[data-theme="dark"] .book-link:hover {
 .auth-message {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 20px;
 }
 
@@ -2286,16 +2282,93 @@ body[data-theme="dark"] .book-link:hover {
   color: var(--danger);
 }
 
+#authSubmit {
+  width: auto;
+  justify-self: start;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Compact Shadcn control dimensions. */
+input:not([type="checkbox"]):not([type="radio"]),
+select {
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+textarea {
+  min-height: 96px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.primary-button,
+.ghost-button,
+.danger-button {
+  width: auto;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.book-form > .primary-button,
+#dialogSaveStatus {
+  justify-self: start;
+}
+
+.icon-button,
+.book-card .icon-button,
+.dialog-close {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+
+.tab-button {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
 @media (max-width: 720px) {
   .topbar {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .topbar-actions {
-    max-width: 180px;
+    max-width: none;
   }
 
   .sync-indicator {
-    order: 3;
+    width: 32px;
+    min-width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .sync-indicator > span {
+    display: none;
   }
 }

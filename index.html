@@ -106,11 +106,17 @@
             </svg>
             <span id="syncLabel">Локально</span>
           </div>
-          <button type="button" id="authButton" class="ghost-button auth-button">
+          <button
+            type="button"
+            id="authButton"
+            class="icon-button auth-button"
+            aria-label="Войти и синхронизировать полку"
+            title="Войти и синхронизировать полку"
+          >
             <svg class="ui-icon button-icon" aria-hidden="true">
               <use id="authButtonIcon" href="#icon-user"></use>
             </svg>
-            <span id="authButtonLabel">Войти</span>
+            <span id="authButtonLabel" class="sr-only">Войти</span>
           </button>
           <button type="button" id="themeToggle" class="icon-button" aria-label="Переключить тему" title="Переключить тему">
             <svg class="ui-icon theme-icon theme-sun" aria-hidden="true">
