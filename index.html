@@ -133,8 +133,8 @@
         <article class="hero-card">
           <h2>Личная полка и каталог популярных книг</h2>
           <p id="dailyQuote" class="daily-quote">
-            Добавляй книги вручную, отмечай аудиоформат и смотри прогресс
-            по тематическим подборкам.
+            Добавляй книги вручную, отмечай статус и смотри, сколько книг
+            завершено в тематических подборках.
           </p>
         </article>
 
@@ -144,11 +144,11 @@
             <strong id="totalBooks">0</strong>
           </div>
           <div class="stat-card">
-            <span>Завершено</span>
+            <span>Прочитано или прослушано</span>
             <strong id="completedBooks">0</strong>
           </div>
           <div class="stat-card">
-            <span>Из 1000 отмечено</span>
+            <span>Из 1000 завершено</span>
             <strong id="catalogCompleted">0</strong>
           </div>
         </aside>
@@ -241,50 +241,14 @@
                   <input type="text" id="author" name="author" required />
                 </label>
 
-                <div class="two-columns">
-                  <label>
-                    Формат
-                    <select id="format" name="format">
-                      <option value="reading">Читаю</option>
-                      <option value="audio">Слушаю</option>
-                      <option value="both">Читаю и слушаю</option>
-                    </select>
-                  </label>
-
-                  <label>
-                    Единица
-                    <select id="unit" name="unit">
-                      <option value="pages">Страницы</option>
-                      <option value="minutes">Минуты</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div class="two-columns">
-                  <label>
-                    Всего
-                    <input type="number" id="totalAmount" name="totalAmount" min="1" required />
-                  </label>
-
-                  <label>
-                    Пройдено
-                    <input
-                      type="number"
-                      id="currentAmount"
-                      name="currentAmount"
-                      min="0"
-                      value="0"
-                      required
-                    />
-                  </label>
-                </div>
-
                 <label>
                   Статус
                   <select id="status" name="status">
                     <option value="planned">Хочу прочитать</option>
                     <option value="reading">Читаю</option>
+                    <option value="listening">Слушаю</option>
                     <option value="finished">Прочитано</option>
+                    <option value="listened">Прослушано</option>
                   </select>
                 </label>
 
@@ -311,7 +275,7 @@
               <div class="shelf-toolbar">
                 <div class="panel-heading">
                   <h2>Моя полка</h2>
-                  <p>Редактируй прогресс и копируй текст для шеринга.</p>
+                  <p>Меняй статус книги и копируй ссылку для шеринга.</p>
                 </div>
 
                 <div class="toolbar-controls">
@@ -324,7 +288,9 @@
                     <option value="all">Все статусы</option>
                     <option value="planned">Хочу прочитать</option>
                     <option value="reading">Читаю</option>
+                    <option value="listening">Слушаю</option>
                     <option value="finished">Прочитано</option>
+                    <option value="listened">Прослушано</option>
                   </select>
                   <select id="shelfSort">
                     <option value="default">Без сортировки</option>
@@ -354,7 +320,7 @@
               <div class="panel-heading">
                 <h2>Популярные книги</h2>
                 <p>
-                  Книги разбиты по темам, а прогресс подтягивается из твоей полки.
+                  Книги разбиты по темам, а статусы подтягиваются из твоей полки.
                 </p>
               </div>
 
@@ -374,10 +340,12 @@
                   <option value="dataviz">Картография</option>
                 </select>
                 <select id="catalogStatusFilter">
-                  <option value="all">Все</option>
-                  <option value="finished">Только прочитанные</option>
-                  <option value="active">Только начатые</option>
-                  <option value="new">Только не начатые</option>
+                  <option value="all">Все статусы</option>
+                  <option value="planned">Хочу прочитать</option>
+                  <option value="reading">Читаю</option>
+                  <option value="listening">Слушаю</option>
+                  <option value="finished">Прочитано</option>
+                  <option value="listened">Прослушано</option>
                 </select>
                 <select id="catalogSort">
                   <option value="default">Без сортировки</option>
@@ -422,10 +390,12 @@
                   placeholder="Поиск по книгам и авторам"
                 />
                 <select id="dataVizStatusFilter">
-                  <option value="all">Все</option>
-                  <option value="finished">Прочитанные</option>
-                  <option value="active">Начатые</option>
-                  <option value="new">Не начатые</option>
+                  <option value="all">Все статусы</option>
+                  <option value="planned">Хочу прочитать</option>
+                  <option value="reading">Читаю</option>
+                  <option value="listening">Слушаю</option>
+                  <option value="finished">Прочитано</option>
+                  <option value="listened">Прослушано</option>
                 </select>
                 <select id="dataVizSort">
                   <option value="default">Без сортировки</option>
@@ -473,21 +443,6 @@
           </div>
         </div>
 
-        <div class="progress-block">
-          <div class="progress-meta">
-            <span class="progress-label"></span>
-            <span class="progress-percent"></span>
-          </div>
-          <div class="book-spine-progress"></div>
-        </div>
-
-        <div class="card-controls">
-          <label>
-            Текущий прогресс
-            <input type="number" class="card-amount" min="0" />
-          </label>
-        </div>
-
         <p class="book-notes"></p>
       </article>
     </template>
@@ -500,7 +455,6 @@
         </div>
         <div class="catalog-item-side">
           <span class="catalog-state"></span>
-          <div class="book-spine-progress compact"></div>
         </div>
       </article>
     </template>
@@ -561,7 +515,14 @@
         <aside class="book-dialog-cover">
           <div class="book-cover dialog-book-cover" aria-hidden="true">
             <span>Book</span>
-            <img id="dialogCoverImage" class="book-cover-image" alt="" loading="lazy" />
+            <img
+              id="dialogCoverImage"
+              class="book-cover-image"
+              alt=""
+              loading="eager"
+              decoding="async"
+              referrerpolicy="no-referrer"
+            />
           </div>
           <span id="dialogStatusBadge" class="status-badge"></span>
           <h2 id="dialogTitle"></h2>
@@ -591,22 +552,8 @@
           </div>
 
           <section class="dialog-shelf-details" aria-labelledby="dialogShelfTitle">
-            <div class="dialog-section-heading">
-              <div>
-                <p class="dialog-section-label">Личная полка</p>
-                <h3 id="dialogShelfTitle">Мой прогресс</h3>
-              </div>
-              <strong id="dialogProgressPercent">0%</strong>
-            </div>
-
-            <div class="dialog-progress-block">
-              <div class="progress-meta">
-                <span id="dialogProgressLabel"></span>
-                <span id="dialogFormat"></span>
-              </div>
-              <div id="dialogProgressSpines" class="book-spine-progress"></div>
-            </div>
-
+            <p class="dialog-section-label">Личная полка</p>
+            <h3 id="dialogShelfTitle">Мои заметки</h3>
             <p id="dialogNotes" class="dialog-notes"></p>
           </section>
 
@@ -634,12 +581,21 @@
                   <small>Яндекс Книги</small>
                 </span>
               </a>
+              <a id="dialogLitresBookLink" class="book-link" target="_blank" rel="noopener">
+                <svg class="ui-icon book-link-icon" aria-hidden="true">
+                  <use href="#icon-book-open"></use>
+                </svg>
+                <span class="book-link-copy">
+                  <span>Электронная книга</span>
+                  <small>ЛитРес</small>
+                </span>
+              </a>
               <a id="dialogListenLink" class="book-link" target="_blank" rel="noopener">
                 <svg class="ui-icon book-link-icon" aria-hidden="true">
                   <use href="#icon-headphones"></use>
                 </svg>
                 <span class="book-link-copy">
-                  <span>Слушать</span>
+                  <span>Аудиокнига</span>
                   <small>Литрес · аудиокниги</small>
                 </span>
               </a>
@@ -660,7 +616,9 @@
             <select id="dialogStatus">
               <option value="planned">Хочу прочитать</option>
               <option value="reading">Читаю</option>
+              <option value="listening">Слушаю</option>
               <option value="finished">Прочитано</option>
+              <option value="listened">Прослушано</option>
             </select>
           </label>
 

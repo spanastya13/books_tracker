@@ -1827,7 +1827,7 @@ body[data-theme="dark"] .book-link:hover {
 
 .dialog-book-links {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -2371,4 +2371,54 @@ textarea {
   .sync-indicator > span {
     display: none;
   }
+}
+
+/* Status-only shelf: no numeric reading progress inside a book card. */
+.book-card {
+  min-height: 190px;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+}
+
+.book-card .book-notes {
+  align-self: end;
+  margin-top: 22px;
+}
+
+.catalog-item-side {
+  align-items: center;
+}
+
+.catalog-state {
+  max-width: 190px;
+  white-space: normal;
+  text-align: center;
+}
+
+.book-card[data-status="finished"] .status-badge,
+.book-card[data-status="listened"] .status-badge,
+.catalog-item[data-status="finished"] .catalog-state,
+.catalog-item[data-status="listened"] .catalog-state {
+  font-weight: 600;
+}
+
+.book-cover.is-loading span {
+  opacity: 0.7;
+}
+
+.book-cover.is-empty {
+  padding: 14px;
+  background: var(--secondary);
+}
+
+.book-cover.is-empty span {
+  max-width: 100%;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+  opacity: 1;
 }

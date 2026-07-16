@@ -24,10 +24,6 @@ const catalogSearch = document.getElementById("catalogSearch");
 const popularBooksList = document.getElementById("popularBooksList");
 const titleInput = document.getElementById("title");
 const authorInput = document.getElementById("author");
-const formatInput = document.getElementById("format");
-const unitInput = document.getElementById("unit");
-const totalAmountInput = document.getElementById("totalAmount");
-const currentAmountInput = document.getElementById("currentAmount");
 const statusInput = document.getElementById("status");
 const themeToggle = document.getElementById("themeToggle");
 const tabButtons = Array.from(document.querySelectorAll(".tab-button"));
@@ -60,12 +56,9 @@ const dialogSaveStatus = document.getElementById("dialogSaveStatus");
 const dialogCover = bookDetailsDialog.querySelector(".dialog-book-cover");
 const dialogCoverImage = document.getElementById("dialogCoverImage");
 const dialogReadLink = document.getElementById("dialogReadLink");
+const dialogLitresBookLink = document.getElementById("dialogLitresBookLink");
 const dialogListenLink = document.getElementById("dialogListenLink");
 const dialogBuyLink = document.getElementById("dialogBuyLink");
-const dialogProgressPercent = document.getElementById("dialogProgressPercent");
-const dialogProgressLabel = document.getElementById("dialogProgressLabel");
-const dialogProgressSpines = document.getElementById("dialogProgressSpines");
-const dialogFormat = document.getElementById("dialogFormat");
 const dialogNotes = document.getElementById("dialogNotes");
 const authButton = document.getElementById("authButton");
 const authButtonIcon = document.getElementById("authButtonIcon");
@@ -86,19 +79,12 @@ const supabaseClient = window.supabase?.createClient(
 const statusLabels = {
   planned: "Хочу прочитать",
   reading: "Читаю",
+  listening: "Слушаю",
   finished: "Прочитано",
+  listened: "Прослушано",
 };
-
-const formatLabels = {
-  reading: "Читаю",
-  audio: "Слушаю",
-  both: "Читаю и слушаю",
-};
-
-const unitLabels = {
-  pages: "стр.",
-  minutes: "мин.",
-};
+const validStatuses = Object.keys(statusLabels);
+const completedStatuses = new Set(["finished", "listened"]);
 
 const categoryLabels = {
   russian: "Русская литература",
@@ -129,9 +115,9 @@ const dataVizBooks = [
   ["Наглядное объяснение", "Эдвард Тафти"],
   ["Отображение информации", "Эдвард Тафти"],
   ["Красивые доказательства", "Эдвард Тафти"],
-  ["Как мы ориентируемся", "Майкл Бонд"],
+  ["Как мы ориентируемся. Пространство и время без карт и GPS", "Маура О’Коннор"],
   ["Картография", "Кеннет Филд"],
-  ["Как лгать при помощи карт", "Марк Монмонье"],
+  ["Все географические карты лгут", "Марк Монмонье"],
   ["Карты. Их история, значение и язык", "Джерри Броттон"],
   ["История мира в 12 картах", "Джерри Броттон"],
   ["Великие карты", "Джерри Броттон"],
@@ -141,9 +127,9 @@ const dataVizBooks = [
   ["Картография с основами топографии", "Александр Берлянт"],
   ["Картоведение", "Александр Берлянт"],
   ["Тематическое картографирование", "Александр Берлянт"],
-  ["Геоинформационное картографирование", "Александр Берлянт"],
+  ["Геоинформационное картографирование", "Ирина Лурье"],
   ["Введение в геоинформационное картографирование", "Александр Берлянт"],
-  ["Картографический метод исследования", "Константин Салищев"],
+  ["Картографический метод исследования", "Александр Берлянт"],
   ["Проектирование и составление карт", "Константин Салищев"],
   ["Основы картоведения", "Константин Салищев"],
   ["Картографическая генерализация", "Константин Салищев"],
@@ -169,6 +155,91 @@ const dataVizBooks = [
   ["Картография. История, культура, власть", "Джереми Блэк"],
   ["Власть карт", "Денис Вуд"],
 ];
+
+const localBookCovers = new Map(
+  [
+    [
+      "Визуальное представление количественной информации",
+      "Эдвард Тафти",
+      "assets/covers/cartography/tufte-visual-display.jpg",
+    ],
+    [
+      "Наглядное объяснение",
+      "Эдвард Тафти",
+      "assets/covers/cartography/tufte-visual-explanations.jpg",
+    ],
+    [
+      "Отображение информации",
+      "Эдвард Тафти",
+      "assets/covers/cartography/tufte-envisioning-information.jpg",
+    ],
+    [
+      "Красивые доказательства",
+      "Эдвард Тафти",
+      "assets/covers/cartography/tufte-beautiful-evidence.jpg",
+    ],
+    [
+      "Как мы ориентируемся. Пространство и время без карт и GPS",
+      "Маура О’Коннор",
+      "assets/covers/cartography/oconnor-wayfinding.jpg",
+    ],
+    [
+      "Картография",
+      "Кеннет Филд",
+      "assets/covers/cartography/field-cartography.jpg",
+    ],
+    [
+      "Все географические карты лгут",
+      "Марк Монмонье",
+      "assets/covers/cartography/monmonier-maps-lie.jpg",
+    ],
+    [
+      "История мира в 12 картах",
+      "Джерри Броттон",
+      "assets/covers/cartography/brotton-twelve-maps.jpg",
+    ],
+    [
+      "Великие карты",
+      "Джерри Броттон",
+      "assets/covers/cartography/brotton-great-maps.jpg",
+    ],
+    [
+      "Карта-призрак",
+      "Стивен Джонсон",
+      "assets/covers/cartography/johnson-ghost-map.jpg",
+    ],
+    [
+      "На карте. Почему мир выглядит именно так",
+      "Саймон Гарфилд",
+      "assets/covers/cartography/garfield-on-the-map.jpg",
+    ],
+    [
+      "Картографический метод исследования",
+      "Александр Берлянт",
+      "assets/covers/cartography/berlyant-cartographic-method.jpg",
+    ],
+    [
+      "Геоинформационное картографирование",
+      "Ирина Лурье",
+      "assets/covers/cartography/lurie-geoinformation-mapping.jpg",
+    ],
+    [
+      "Карты и цивилизация",
+      "Норман Троуэр",
+      "assets/covers/cartography/thrower-maps-civilization.jpg",
+    ],
+    [
+      "Картография. История, культура, власть",
+      "Джереми Блэк",
+      "assets/covers/cartography/black-maps-history.jpg",
+    ],
+    [
+      "Власть карт",
+      "Денис Вуд",
+      "assets/covers/cartography/wood-power-of-maps.jpg",
+    ],
+  ].map(([title, author, path]) => [getBookKey({ title, author }), path])
+);
 
 const bookDetails = {
   "1984|Джордж Оруэлл": {
@@ -207,9 +278,9 @@ const bookDetails = {
     description:
       "Современное руководство по картографическому дизайну: выбор проекций, цветов, подписей, условных знаков и структуры карты.",
   },
-  "Как лгать при помощи карт|Марк Монмонье": {
-    year: 1991,
-    pages: 232,
+  "Все географические карты лгут|Марк Монмонье": {
+    year: 2021,
+    pages: 240,
     description:
       "Книга о том, как карты могут искажать реальность через проекции, масштаб, классификацию данных и визуальные решения.",
   },
@@ -231,11 +302,23 @@ const bookDetails = {
     description:
       "Документальная история о холере в Лондоне и карте Джона Сноу, которая стала важной вехой в эпидемиологии и городском анализе.",
   },
-  "Как мы ориентируемся|Майкл Бонд": {
-    year: 2020,
-    pages: 336,
+  "Как мы ориентируемся. Пространство и время без карт и GPS|Маура О’Коннор": {
+    year: 2021,
+    pages: 400,
     description:
-      "Книга о навигации, памяти, картах в голове и том, как люди находят путь в городе, природе и незнакомом пространстве.",
+      "Исследование того, как люди и животные находят путь, создают мысленные карты и как GPS меняет наше чувство пространства.",
+  },
+  "Картографический метод исследования|Александр Берлянт": {
+    year: 1978,
+    pages: 256,
+    description:
+      "Монография о применении карт в научных исследованиях, методах анализа картографического изображения и оценке точности результатов.",
+  },
+  "Геоинформационное картографирование|Ирина Лурье": {
+    year: 2016,
+    pages: 424,
+    description:
+      "Учебник о геоинформационных методах анализа, цифровой обработке космических снимков и создании карт на основе пространственных данных.",
   },
   "Визуальное представление количественной информации|Эдвард Тафти": {
     year: 1983,
@@ -463,11 +546,6 @@ bookDetailsDialog.addEventListener("click", (event) => {
     bookDetailsDialog.close();
   }
 });
-dialogCoverImage.addEventListener("error", () => {
-  dialogCover.classList.remove("has-cover");
-  dialogCover.classList.add("is-empty");
-});
-
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     renderTabs(button.dataset.tab);
@@ -493,15 +571,11 @@ bookForm.addEventListener("submit", (event) => {
   const formData = new FormData(bookForm);
   const title = formData.get("title").toString().trim();
   const author = formData.get("author").toString().trim();
-  const format = formData.get("format").toString();
-  const unit = formData.get("unit").toString();
-  const totalAmount = Number(formData.get("totalAmount"));
-  const currentAmount = Number(formData.get("currentAmount"));
   const status = formData.get("status").toString();
   const notes = formData.get("notes").toString().trim();
 
-  if (!title || !author || totalAmount < 1 || currentAmount < 0 || currentAmount > totalAmount) {
-    window.alert("Проверь данные: объем и прогресс должны быть корректными.");
+  if (!title || !author) {
+    window.alert("Укажи название и автора книги.");
     return;
   }
 
@@ -509,21 +583,14 @@ bookForm.addEventListener("submit", (event) => {
     id: crypto.randomUUID(),
     title,
     author,
-    format,
-    unit,
-    totalAmount,
-    currentAmount: normalizeCurrentAmount(currentAmount, totalAmount, status),
-    status: normalizeStatus(status, currentAmount, totalAmount),
+    status,
     notes,
   });
 
   persistAndRefresh();
   bookForm.reset();
   catalogSearch.value = "";
-  currentAmountInput.value = "0";
   statusInput.value = "planned";
-  formatInput.value = "reading";
-  unitInput.value = "pages";
 });
 
 function loadBooks(storageKey = STORAGE_KEY) {
@@ -543,21 +610,19 @@ function loadBooks(storageKey = STORAGE_KEY) {
 }
 
 function normalizeStoredBook(book) {
-  const totalAmount = Math.max(1, Number(book.totalAmount || 1));
-  const currentAmount = Math.min(
-    totalAmount,
-    Math.max(0, Number(book.currentAmount || 0))
-  );
+  let status = validStatuses.includes(book.status) ? book.status : "planned";
+
+  if (book.format === "audio" && status === "reading") {
+    status = "listening";
+  } else if (book.format === "audio" && status === "finished") {
+    status = "listened";
+  }
 
   return {
     id: isUuid(book.id) ? book.id : crypto.randomUUID(),
     title: book.title || "",
     author: book.author || "",
-    format: book.format || "reading",
-    unit: book.unit || "pages",
-    totalAmount,
-    currentAmount,
-    status: book.status || "planned",
+    status,
     notes: book.notes || "",
   };
 }
@@ -798,9 +863,7 @@ function mergeBooksById(...collections) {
 async function loadBooksFromCloud() {
   const { data, error } = await supabaseClient
     .from("user_books")
-    .select(
-      "id, title, author, format, unit, total_amount, current_amount, status, notes, created_at"
-    )
+    .select("id, title, author, format, status, notes, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -818,10 +881,10 @@ function bookToCloudRow(book) {
     user_id: currentUser.id,
     title: book.title,
     author: book.author,
-    format: book.format,
-    unit: book.unit,
-    total_amount: book.totalAmount,
-    current_amount: book.currentAmount,
+    format: ["listening", "listened"].includes(book.status) ? "audio" : "reading",
+    unit: "pages",
+    total_amount: 1,
+    current_amount: isCompletedStatus(book.status) ? 1 : 0,
     status: book.status,
     notes: book.notes,
     updated_at: new Date().toISOString(),
@@ -834,9 +897,6 @@ function cloudRowToBook(row) {
     title: row.title,
     author: row.author,
     format: row.format,
-    unit: row.unit,
-    totalAmount: row.total_amount,
-    currentAmount: row.current_amount,
     status: row.status,
     notes: row.notes,
   });
@@ -948,42 +1008,21 @@ function renderBooks() {
     const badge = fragment.querySelector(".status-badge");
     const title = fragment.querySelector(".book-title");
     const author = fragment.querySelector(".book-author");
-    const progressLabel = fragment.querySelector(".progress-label");
-    const progressPercent = fragment.querySelector(".progress-percent");
-    const progressShelf = fragment.querySelector(".book-spine-progress");
     const notes = fragment.querySelector(".book-notes");
-    const amountInput = fragment.querySelector(".card-amount");
     const shareButton = fragment.querySelector(".share-button");
     const deleteButton = fragment.querySelector(".delete-button");
-    const progress = getProgress(book.currentAmount, book.totalAmount);
 
-    badge.textContent = statusLabels[book.status];
+    card.dataset.status = book.status;
+    badge.textContent = formatStatusLabel(book.status);
     title.textContent = book.title;
     author.textContent = book.author;
-    progressLabel.textContent =
-      `${book.currentAmount} из ${book.totalAmount} ${unitLabels[book.unit]}`;
-    progressPercent.textContent = `${progress}%`;
     notes.textContent = book.notes || "Без заметок";
-    amountInput.value = String(book.currentAmount);
-    amountInput.max = String(book.totalAmount);
 
-    renderSpines(progressShelf, progress, book.status);
     card.addEventListener("click", (event) => {
       if (event.target.closest("button, input, select, textarea")) {
         return;
       }
       openBookDetails(book);
-    });
-
-    amountInput.addEventListener("change", (event) => {
-      const nextAmount = Number(event.target.value);
-      if (Number.isNaN(nextAmount) || nextAmount < 0 || nextAmount > book.totalAmount) {
-        event.target.value = String(book.currentAmount);
-        return;
-      }
-      book.currentAmount = nextAmount;
-      book.status = normalizeStatus(book.status, nextAmount, book.totalAmount);
-      persistAndRefresh();
     });
 
     shareButton.addEventListener("click", async () => {
@@ -1019,12 +1058,14 @@ function renderCatalog() {
   const categoryFilter = catalogCategoryFilter.value;
   const filter = catalogStatusFilter.value;
   const sort = catalogSort.value;
-  const completedCount = generatedCatalog.filter((book) => getCatalogState(book) === "finished").length;
+  const completedCount = generatedCatalog.filter((book) =>
+    isCompletedStatus(getCatalogState(book))
+  ).length;
   const percent = Math.round((completedCount / generatedCatalog.length) * 100);
 
   catalogCompleted.textContent = String(completedCount);
   catalogPercent.textContent = `${percent}%`;
-  renderSpines(catalogShelfProgress, percent, completedCount > 0 ? "reading" : "planned");
+  renderSpines(catalogShelfProgress, percent, completedCount > 0 ? "finished" : "planned");
 
   const filteredCatalog = generatedCatalog.filter((book) => {
     const state = getCatalogState(book);
@@ -1032,10 +1073,7 @@ function renderCatalog() {
       book.title.toLowerCase().includes(query) || book.author.toLowerCase().includes(query);
     const matchesCategory = categoryFilter === "all" || book.category === categoryFilter;
     const matchesState =
-      filter === "all" ||
-      (filter === "finished" && state === "finished") ||
-      (filter === "active" && state === "reading") ||
-      (filter === "new" && state === "planned");
+      filter === "all" || state === filter;
     return matchesQuery && matchesCategory && matchesState;
   });
   const sortedCatalog = sortBooksByVolume(filteredCatalog, sort);
@@ -1058,15 +1096,13 @@ function renderCatalog() {
       const title = fragment.querySelector(".catalog-title");
       const author = fragment.querySelector(".catalog-author");
       const stateBadge = fragment.querySelector(".catalog-state");
-      const shelf = fragment.querySelector(".book-spine-progress");
       const item = fragment.querySelector(".catalog-item");
       const state = getCatalogState(book);
-      const progress = getCatalogProgress(book);
 
       title.textContent = book.title;
       author.textContent = book.author;
-      stateBadge.textContent = statusLabels[state];
-      renderSpines(shelf, progress, state);
+      item.dataset.status = state;
+      stateBadge.textContent = formatStatusLabel(state);
       makeCatalogItemInteractive(item, book);
 
       section.appendChild(fragment);
@@ -1085,21 +1121,20 @@ function renderDataVizBooks() {
     author,
     category: "dataviz",
   }));
-  const completedCount = collection.filter((book) => getCatalogState(book) === "finished").length;
+  const completedCount = collection.filter((book) =>
+    isCompletedStatus(getCatalogState(book))
+  ).length;
   const percent = Math.round((completedCount / collection.length) * 100);
 
   dataVizPercent.textContent = `${percent}%`;
-  renderSpines(dataVizShelfProgress, percent, completedCount > 0 ? "reading" : "planned");
+  renderSpines(dataVizShelfProgress, percent, completedCount > 0 ? "finished" : "planned");
 
   const filteredBooks = collection.filter((book) => {
     const state = getCatalogState(book);
     const matchesQuery =
       book.title.toLowerCase().includes(query) || book.author.toLowerCase().includes(query);
     const matchesState =
-      filter === "all" ||
-      (filter === "finished" && state === "finished") ||
-      (filter === "active" && state === "reading") ||
-      (filter === "new" && state === "planned");
+      filter === "all" || state === filter;
     return matchesQuery && matchesState;
   });
   const sortedBooks = sortBooksByVolume(filteredBooks, sort);
@@ -1111,15 +1146,13 @@ function renderDataVizBooks() {
     const title = fragment.querySelector(".catalog-title");
     const author = fragment.querySelector(".catalog-author");
     const stateBadge = fragment.querySelector(".catalog-state");
-    const shelf = fragment.querySelector(".book-spine-progress");
     const item = fragment.querySelector(".catalog-item");
     const state = getCatalogState(book);
-    const progress = getCatalogProgress(book);
 
     title.textContent = book.title;
     author.textContent = book.author;
-    stateBadge.textContent = statusLabels[state];
-    renderSpines(shelf, progress, state);
+    item.dataset.status = state;
+    stateBadge.textContent = formatStatusLabel(state);
     makeCatalogItemInteractive(item, book);
 
     dataVizList.appendChild(fragment);
@@ -1150,11 +1183,6 @@ function openBookDetails(book) {
   };
 
   const status = existingBook.status || "planned";
-  const format = existingBook.format || "reading";
-  const unit = existingBook.unit || "pages";
-  const totalAmount = Number(existingBook.totalAmount || meta.pages);
-  const currentAmount = Number(existingBook.currentAmount || 0);
-  const progress = getProgress(currentAmount, totalAmount);
   dialogTitle.textContent = existingBook.title;
   dialogAuthor.textContent = existingBook.author;
   dialogYear.textContent = String(meta.year);
@@ -1162,18 +1190,20 @@ function openBookDetails(book) {
   dialogAudio.textContent = meta.audio;
   dialogDescription.textContent = meta.description;
   dialogStatus.value = status;
-  dialogStatusBadge.textContent = statusLabels[status];
-  dialogProgressPercent.textContent = `${progress}%`;
-  dialogProgressLabel.textContent = `${currentAmount} из ${totalAmount} ${unitLabels[unit] || unitLabels.pages}`;
-  dialogFormat.textContent = formatLabels[format] || formatLabels.reading;
+  dialogStatusBadge.textContent = formatStatusLabel(status);
   dialogNotes.textContent = existingBook.notes || "Без заметок";
   dialogNotes.classList.toggle("is-empty", !existingBook.notes);
-  renderSpines(dialogProgressSpines, progress, status);
-  setupBookLinks(existingBook, dialogReadLink, dialogListenLink, dialogBuyLink);
-  resetDialogCover();
-  loadBookCover(existingBook, dialogCover, dialogCoverImage);
+  setupBookLinks(
+    existingBook,
+    dialogReadLink,
+    dialogLitresBookLink,
+    dialogListenLink,
+    dialogBuyLink
+  );
+  resetDialogCover(existingBook);
 
   bookDetailsDialog.showModal();
+  void loadBookCover(existingBook, dialogCover, dialogCoverImage);
 }
 
 function saveDialogStatus() {
@@ -1183,30 +1213,14 @@ function saveDialogStatus() {
 
   const status = dialogStatus.value;
   const existingBook = getCatalogMatch(activeDialogBook);
-  const totalAmount = activeDialogBook.meta.pages;
-  const currentAmount =
-    status === "finished" ? totalAmount : status === "reading" ? Math.max(1, Math.round(totalAmount * 0.12)) : 0;
 
   if (existingBook) {
     existingBook.status = status;
-    existingBook.totalAmount = existingBook.totalAmount || totalAmount;
-    existingBook.currentAmount =
-      status === "planned"
-        ? 0
-        : normalizeCurrentAmount(
-            Math.max(existingBook.currentAmount, currentAmount),
-            existingBook.totalAmount,
-            status
-          );
   } else {
     books.unshift({
       id: crypto.randomUUID(),
       title: activeDialogBook.title,
       author: activeDialogBook.author,
-      format: "reading",
-      unit: "pages",
-      totalAmount,
-      currentAmount,
       status,
       notes: "",
     });
@@ -1218,7 +1232,9 @@ function saveDialogStatus() {
 
 function renderStats() {
   totalBooks.textContent = String(books.length);
-  completedBooks.textContent = String(books.filter((book) => book.status === "finished").length);
+  completedBooks.textContent = String(
+    books.filter((book) => isCompletedStatus(book.status)).length
+  );
   shelfTabCount.textContent = String(books.length);
   dataVizTabCount.textContent = String(dataVizBooks.length);
 }
@@ -1258,10 +1274,6 @@ function applyCatalogSelection() {
 
   titleInput.value = selected.title;
   authorInput.value = selected.author;
-  formatInput.value = "reading";
-  unitInput.value = "pages";
-  totalAmountInput.value = "300";
-  currentAmountInput.value = "0";
   statusInput.value = "planned";
 }
 
@@ -1272,26 +1284,6 @@ function fillCatalog() {
     option.value = `${book.title} - ${book.author}`;
     popularBooksList.appendChild(option);
   });
-}
-
-function normalizeStatus(status, currentAmount, totalAmount) {
-  if (currentAmount >= totalAmount) {
-    return "finished";
-  }
-  if (currentAmount > 0) {
-    return "reading";
-  }
-  return status === "finished" ? "planned" : status;
-}
-
-function normalizeCurrentAmount(currentAmount, totalAmount, status) {
-  if (status === "finished") {
-    return totalAmount;
-  }
-  if (status === "planned") {
-    return 0;
-  }
-  return Math.min(currentAmount, totalAmount);
 }
 
 function sortBooksByVolume(collection, sort) {
@@ -1307,27 +1299,16 @@ function sortBooksByVolume(collection, sort) {
 }
 
 function getBookVolume(book) {
-  if (book.totalAmount) {
-    return Number(book.unit === "minutes" ? Math.round(book.totalAmount / 1.9) : book.totalAmount);
-  }
-
   const known = bookDetails[`${book.title}|${book.author}`];
   return Number(known?.pages || estimatePages(book));
-}
-
-function getProgress(currentAmount, totalAmount) {
-  if (!totalAmount) {
-    return 0;
-  }
-  return Math.round((currentAmount / totalAmount) * 100);
 }
 
 function getBookMeta(book) {
   const key = `${book.title}|${book.author}`;
   const known = bookDetails[key];
-  const pages = Number(book.unit === "minutes" ? known?.pages || estimatePages(book) : book.totalAmount || known?.pages || estimatePages(book));
+  const pages = Number(known?.pages || estimatePages(book));
   const year = known?.year || estimateYear(book);
-  const audio = book.unit === "minutes" ? formatMinutes(book.totalAmount) : estimateAudioTime(pages);
+  const audio = estimateAudioTime(pages);
 
   return {
     year,
@@ -1377,83 +1358,243 @@ function buildBookDescription(book) {
 function buildShareText(book) {
   return [
     `Сейчас у меня в трекере "${book.title}" — ${book.author}.`,
-    `Формат: ${formatLabels[book.format]}.`,
     `Статус: ${statusLabels[book.status]}.`,
-    `Прогресс: ${book.currentAmount} из ${book.totalAmount} ${unitLabels[book.unit]}.`,
   ].join(" ");
 }
 
-function setupBookLinks(book, readLink, listenLink, buyLink) {
+function setupBookLinks(book, readLink, litresBookLink, listenLink, buyLink) {
   const query = buildBookQuery(book);
   readLink.href = `https://books.yandex.ru/search?text=${query}`;
+  litresBookLink.href = `https://www.litres.ru/search/?q=${query}`;
   listenLink.href = `https://www.litres.ru/search/?q=${query}&art_types=audiobook`;
   buyLink.href = `https://www.chitai-gorod.ru/search?phrase=${query}`;
+  litresBookLink.querySelector("small").textContent = "ЛитРес · поиск";
+  listenLink.querySelector("small").textContent = "ЛитРес · поиск аудиокниги";
 }
 
 function buildBookQuery(book) {
   return encodeURIComponent(`${book.title} ${book.author}`);
 }
 
-function resetDialogCover() {
-  dialogCover.classList.remove("has-cover", "is-empty");
+function resetDialogCover(book) {
+  dialogCover.classList.remove("has-cover", "is-empty", "is-loading");
+  dialogCoverImage.onload = null;
+  dialogCoverImage.onerror = null;
   dialogCoverImage.removeAttribute("src");
+  dialogCover.querySelector("span").textContent = `Ищем обложку «${book.title}»`;
 }
 
 async function loadBookCover(book, cover, image) {
   const key = getBookKey(book);
+  const localCover = localBookCovers.get(key);
   const cachedCover = coverCache[key];
+  cover.classList.add("is-loading");
+
+  if (localCover) {
+    const loaded = await tryApplyCoverImage(book, cover, image, localCover);
+    if (loaded) {
+      return;
+    }
+  }
 
   if (cachedCover) {
-    applyCoverImage(cover, image, cachedCover);
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${buildGoogleBooksQuery(book)}&maxResults=5&printType=books`
-    );
-    const data = await response.json();
-    const coverSource = findBestCover(data.items || []);
-
-    if (coverSource) {
-      const secureCoverUrl = prepareCoverUrl(coverSource);
-      coverCache[key] = secureCoverUrl;
-      saveCoverCache();
-      applyCoverImage(cover, image, secureCoverUrl);
+    const loaded = await tryApplyCoverImage(book, cover, image, cachedCover);
+    if (loaded) {
+      return;
     }
-  } catch {
-    cover.classList.add("is-empty");
+
+    delete coverCache[key];
+    saveCoverCache();
   }
+
+  const coverLoaders = [fetchOpenLibraryCoverUrls, fetchGoogleCoverUrls];
+
+  for (const loader of coverLoaders) {
+    try {
+      const urls = await loader(book);
+      for (const url of urls) {
+        const loaded = await tryApplyCoverImage(book, cover, image, url);
+        if (loaded) {
+          coverCache[key] = url;
+          saveCoverCache();
+          return;
+        }
+      }
+    } catch {
+      // Try the next cover provider.
+    }
+  }
+
+  setCoverFallback(book, cover, image);
 }
 
-function findBestCover(items) {
+async function fetchGoogleCoverUrls(book) {
+  const data = await fetchJsonWithTimeout(
+    `https://www.googleapis.com/books/v1/volumes?q=${buildGoogleBooksQuery(book)}&maxResults=10&printType=books`
+  );
+  const items = [...(data.items || [])].sort(
+    (first, second) =>
+      scoreBookMatch(second.volumeInfo?.title, second.volumeInfo?.authors, book) -
+      scoreBookMatch(first.volumeInfo?.title, first.volumeInfo?.authors, book)
+  );
   const sizes = ["extraLarge", "large", "medium", "small", "thumbnail", "smallThumbnail"];
+  const urls = [];
 
   for (const item of items) {
     for (const size of sizes) {
       const url = item.volumeInfo?.imageLinks?.[size];
       if (url) {
-        return { url, size };
+        prepareCoverUrls({ url, size }).forEach((prepared) => {
+          if (!urls.includes(prepared)) {
+            urls.push(prepared);
+          }
+        });
       }
     }
   }
 
-  return null;
+  return urls;
 }
 
-function prepareCoverUrl(cover) {
-  let url = cover.url.replace("http://", "https://").replace("&edge=curl", "");
+async function fetchOpenLibraryCoverUrls(book) {
+  const params = new URLSearchParams({
+    title: book.title,
+    author: book.author,
+    limit: "10",
+  });
+  const data = await fetchJsonWithTimeout(`https://openlibrary.org/search.json?${params}`);
+  const docs = [...(data.docs || [])].sort(
+    (first, second) =>
+      scoreBookMatch(second.title, second.author_name, book) -
+      scoreBookMatch(first.title, first.author_name, book)
+  );
+  const urls = [];
 
-  if (["thumbnail", "smallThumbnail"].includes(cover.size)) {
-    url = url.replace(/([?&])zoom=\d/, "$1zoom=2");
+  docs.forEach((entry) => {
+    if (entry.cover_i) {
+      urls.push(`https://covers.openlibrary.org/b/id/${entry.cover_i}-L.jpg?default=false`);
+    }
+
+    const isbn = entry.isbn?.[0];
+    if (isbn) {
+      urls.push(`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`);
+    }
+  });
+
+  return Array.from(new Set(urls));
+}
+
+function prepareCoverUrls(cover) {
+  const original = cover.url
+    .replace(/^http:\/\//, "https://")
+    .replace("&edge=curl", "")
+    .replace("?edge=curl&", "?");
+
+  if (!["thumbnail", "smallThumbnail"].includes(cover.size)) {
+    return [original];
   }
 
-  return url;
+  const enlarged = original.replace(/([?&])zoom=\d/, "$1zoom=2");
+  return enlarged === original ? [original] : [enlarged, original];
 }
 
-function applyCoverImage(cover, image, coverUrl) {
-  image.src = coverUrl;
-  cover.classList.add("has-cover");
+function tryApplyCoverImage(book, cover, image, coverUrl) {
+  if (!isActiveDialogBook(book)) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    const timeout = window.setTimeout(() => finish(false), 8000);
+
+    function finish(success) {
+      window.clearTimeout(timeout);
+      image.onload = null;
+      image.onerror = null;
+
+      if (success && isActiveDialogBook(book)) {
+        cover.classList.remove("is-loading", "is-empty");
+        cover.classList.add("has-cover");
+        resolve(true);
+        return;
+      }
+
+      resolve(false);
+    }
+
+    image.onload = () => {
+      const isUsable = image.naturalWidth >= 40 && image.naturalHeight >= 60;
+      finish(isUsable);
+    };
+    image.onerror = () => finish(false);
+    image.src = coverUrl;
+  });
+}
+
+function setCoverFallback(book, cover, image) {
+  if (!isActiveDialogBook(book)) {
+    return;
+  }
+
+  image.removeAttribute("src");
+  cover.classList.remove("has-cover", "is-loading");
+  cover.classList.add("is-empty");
+  cover.querySelector("span").textContent = book.title;
+}
+
+function isActiveDialogBook(book) {
+  return activeDialogBook && getBookKey(activeDialogBook) === getBookKey(book);
+}
+
+function scoreBookMatch(title, authors, book) {
+  const normalizedTitle = normalizeSearchText(title);
+  const targetTitle = normalizeSearchText(book.title);
+  const authorText = normalizeSearchText(Array.isArray(authors) ? authors.join(" ") : authors);
+  const targetAuthorTokens = normalizeSearchText(book.author)
+    .split(" ")
+    .filter((token) => token.length > 2);
+  let score = 0;
+
+  if (normalizedTitle === targetTitle) {
+    score += 120;
+  } else if (normalizedTitle.includes(targetTitle) || targetTitle.includes(normalizedTitle)) {
+    score += 60;
+  }
+
+  targetAuthorTokens.forEach((token) => {
+    if (authorText.includes(token)) {
+      score += 20;
+    }
+  });
+
+  return score;
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .trim();
+}
+
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function buildGoogleBooksQuery(book) {
@@ -1499,10 +1640,6 @@ function buildSharePayload(book) {
   return {
     title: book.title,
     author: book.author,
-    format: book.format,
-    unit: book.unit,
-    totalAmount: book.totalAmount,
-    currentAmount: book.currentAmount,
     status: book.status,
     notes: book.notes,
   };
@@ -1530,16 +1667,14 @@ function getSharedBookFromUrl() {
       return null;
     }
 
-    return {
+    return normalizeStoredBook({
+      id: crypto.randomUUID(),
       title: String(parsed.title),
       author: String(parsed.author),
-      format: parsed.format || "reading",
-      unit: parsed.unit || "pages",
-      totalAmount: Number(parsed.totalAmount || estimatePages(parsed)),
-      currentAmount: Number(parsed.currentAmount || 0),
-      status: parsed.status || "planned",
+      format: parsed.format,
+      status: parsed.status,
       notes: parsed.notes || "",
-    };
+    });
   } catch {
     return null;
   }
@@ -1716,9 +1851,13 @@ function getCatalogState(book) {
   return match ? match.status : "planned";
 }
 
-function getCatalogProgress(book) {
-  const match = getCatalogMatch(book);
-  return match ? getProgress(match.currentAmount, match.totalAmount) : 0;
+function formatStatusLabel(status) {
+  const label = statusLabels[status] || statusLabels.planned;
+  return isCompletedStatus(status) ? `✓ ${label}` : label;
+}
+
+function isCompletedStatus(status) {
+  return completedStatuses.has(status);
 }
 
 function applySavedTheme() {
